@@ -1,0 +1,5 @@
+*.o
+*~
+core
+*.log
+kernel.img
