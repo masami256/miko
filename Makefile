@@ -14,6 +14,7 @@ kern_mm_dir = $(kern_dir)/mm
 objs = $(boot_dir)/head.o \
 	$(kern_dir)/cmain.o \
 	$(kern_dir)/gdt.o \
+	$(kern_dir)/interrupt_handler.o \
 	$(kern_dir)/interrupt.o \
 	$(kern_dir)/intr_gate.o \
 	$(kern_dir)/printk.o \

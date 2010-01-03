@@ -6,6 +6,7 @@ objs = cmain.o \
 	gdt.o \
 	printk.o \
 	intr_gate.o \
+	interrupt_handler.o \
 	interrupt.o \
 	mm/mm.o
 
