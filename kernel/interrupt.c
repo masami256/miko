@@ -132,7 +132,7 @@ static void lidt(void)
 
 static void timer_handler(struct registers regs)
 {
-	printk("Timer hanlder\n");
+//	printk("Timer hanlder\n");
 }
 
 /////////////////////////////////////////////////

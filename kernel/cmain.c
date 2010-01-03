@@ -3,6 +3,7 @@
 #include "gdt.h"
 #include "interrupt.h"
 #include "printk.h"
+#include "mm/mm.h"
 
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
@@ -28,8 +29,6 @@ void cmain(unsigned long magic, unsigned long addr)
 	printk("Initialize gdt.\n");
 	setup_gdt();
 	
-	// Then, we are going to enable interrupts.
-
 	if (CHECK_FLAG (mbi->flags, 0))
 		printk("mem_lower = %uKB, mem_upper = %uKB\n",
 			(unsigned) mbi->mem_lower, (unsigned) mbi->mem_upper);
@@ -37,6 +36,9 @@ void cmain(unsigned long magic, unsigned long addr)
 	// Setup initerrupt service routine.
 	printk("Setup initerrupt service routine.\n");
 	setup_inir();
+
+	// Setup paging.
+	setup_paging();
 
 	printk("Welcome to mikoOS!\n");
 

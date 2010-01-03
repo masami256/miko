@@ -6,10 +6,11 @@ objs = cmain.o \
 	gdt.o \
 	printk.o \
 	intr_gate.o \
-	interrupt.o 
+	interrupt.o \
+	mm/mm.o
 
 all: $(objs)
-	
+	cd mm && make
 .c.o:
 	$(CC) $(CFLAGS) $< -c
 

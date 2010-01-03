@@ -16,13 +16,15 @@ objs = $(boot_dir)/head.o \
 	$(kern_dir)/gdt.o \
 	$(kern_dir)/interrupt.o \
 	$(kern_dir)/intr_gate.o \
-	$(kern_dir)/printk.o
+	$(kern_dir)/printk.o \
+	$(kern_mm_dir)/mm.o
 
 all: build $(objs)
 	$(LD) $(LDFLAGS) $(objs) -o $(kernel) 
 
 build:
 	cd $(boot_dir) && make
+	cd $(kern_mm_dir) && make
 	cd $(kern_dir) && make
 
 install: loop_dev_install
@@ -44,6 +46,7 @@ qemu_test:
 clean:
 	cd $(boot_dir) && make clean 
 	cd $(kern_dir) && make clean
+	cd $(kern_mm_dir) && make clean
 	-rm -f $(kernel) *.log
 	find . -name '*~' -exec rm {} \; 
 
