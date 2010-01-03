@@ -18,13 +18,68 @@ struct handler_function {
 };
 struct handler_function handlers[INTERRUPT_HANDLER_NUM];
 
+struct handler_define {
+	u_int32_t base;
+	u_int16_t selector;
+	u_int8_t type;
+};
+struct handler_define  handler_info[] = {
+	{ (u_int32_t) isr_gate0, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate1, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate2, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate3, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate4, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate5, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate6, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate7, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate8, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate9, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate10, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate11, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate12, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate13, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate14, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate15, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate16, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate17, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate18, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate19, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate20, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate21, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate22, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate23, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate24, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate25, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate26, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate27, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate28, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate29, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate30, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate31, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate0, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate1, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate2, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate3, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate4, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate5, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate6, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate7, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate8, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate9, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate10, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate11, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate12, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate13, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate14, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) irq_gate15, KERN_CS, GATE_TYPE_INTR_GATE }
+};
+	
 /////////////////////////////////////////////////
 // private functions
 /////////////////////////////////////////////////
 static void remap_irq(void);
 static void set_handler_func(int idx, void (*f)(struct registers regs));
-static void set_isr_handler(void);
-static void set_irq_handler(void);
+static void set_interrupt_handler(void);
 static void timer_handler(struct registers regs);
 
 static inline void set_handler_func(int idx, void (*f)(struct registers regs))
@@ -62,62 +117,14 @@ static void remap_irq(void)
 	outb(0xA1, 0x0);
 }
 
-static void set_isr_handler(void)
+
+static void set_interrupt_handler(void)
 {
-	set_handler(0, (u_int32_t) isr_gate0, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(1, (u_int32_t) isr_gate1, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(2, (u_int32_t) isr_gate2, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(3, (u_int32_t) isr_gate3, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(4, (u_int32_t) isr_gate4, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(5, (u_int32_t) isr_gate5, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(6, (u_int32_t) isr_gate6, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(7, (u_int32_t) isr_gate7, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(8, (u_int32_t) isr_gate8, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(9, (u_int32_t) isr_gate9, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(10, (u_int32_t) isr_gate10, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(11, (u_int32_t) isr_gate11, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(12, (u_int32_t) isr_gate12, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(13, (u_int32_t) isr_gate13, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(14, (u_int32_t) isr_gate14, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(15, (u_int32_t) isr_gate15, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(16, (u_int32_t) isr_gate16, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(17, (u_int32_t) isr_gate17, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(18, (u_int32_t) isr_gate18, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(19, (u_int32_t) isr_gate19, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(20, (u_int32_t) isr_gate20, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(21, (u_int32_t) isr_gate21, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(22, (u_int32_t) isr_gate22, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(23, (u_int32_t) isr_gate23, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(24, (u_int32_t) isr_gate24, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(25, (u_int32_t) isr_gate25, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(26, (u_int32_t) isr_gate26, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(27, (u_int32_t) isr_gate27, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(28, (u_int32_t) isr_gate28, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(29, (u_int32_t) isr_gate29, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(30, (u_int32_t) isr_gate30, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(31, (u_int32_t) isr_gate31, KERN_CS, GATE_TYPE_INTR_GATE);
+	unsigned  i;
+	struct handler_define *p = &handler_info[0];
 
-}
-
-static void set_irq_handler(void)
-{
-	set_handler(32, (u_int32_t) irq_gate0, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(33, (u_int32_t) irq_gate1, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(34, (u_int32_t) irq_gate2, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(35, (u_int32_t) irq_gate3, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(36, (u_int32_t) irq_gate4, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(37, (u_int32_t) irq_gate5, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(38, (u_int32_t) irq_gate6, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(39, (u_int32_t) irq_gate7, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(40, (u_int32_t) irq_gate8, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(41, (u_int32_t) irq_gate9, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(42, (u_int32_t) irq_gate10, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(43, (u_int32_t) irq_gate11, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(44, (u_int32_t) irq_gate12, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(45, (u_int32_t) irq_gate13, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(46, (u_int32_t) irq_gate14, KERN_CS, GATE_TYPE_INTR_GATE);
-	set_handler(47, (u_int32_t) irq_gate15, KERN_CS, GATE_TYPE_INTR_GATE);
-
+	for (i = 0; i < sizeof(handler_info) / sizeof(handler_info[0]); i++, p++)
+		set_handler(i, p->base, p->selector, p->type);
 }
 
 static void lidt(void)
@@ -132,7 +139,7 @@ static void lidt(void)
 
 static void timer_handler(struct registers regs)
 {
-//	printk("Timer hanlder\n");
+	printk("Timer hanlder\n");
 }
 
 /////////////////////////////////////////////////
@@ -148,8 +155,7 @@ void setup_inir(void)
 
 	remap_irq();
 
-	set_isr_handler();
-	set_irq_handler();
+	set_interrupt_handler();
 
 	// set dummy handler function.
 	for (i = 0; i < INTERRUPT_HANDLER_NUM; i++)
