@@ -22,6 +22,7 @@ multiboot_hader :
 
 entry:
 	.comm stack, KERNEL_STACK_SIZE, 32     /*reserve 16k stack on a quadword boundary */
+	.comm pgd, 2046, 4
 	push 	%ebx /* ebx point to 32bit address of the multiboot information structure */
 	push 	%eax /* eax must be 0x2BADB002 */
 	call 	cmain  /* call c function */

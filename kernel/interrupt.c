@@ -24,14 +24,8 @@ struct handler_function handlers[INTERRUPT_HANDLER_NUM];
 // private functions
 /////////////////////////////////////////////////
 static void remap_irq(void);
-static void set_handler_func(int idx, void (*f)(struct registers regs));
 static void set_interrupt_handler(void);
 static void timer_handler(struct registers regs);
-
-static inline void set_handler_func(int idx, void (*f)(struct registers regs))
-{
-	handlers[idx].func = f;
-}
 
 static void set_handler(int idx, u_int32_t base,
 			u_int16_t selector, u_int8_t type)
@@ -95,7 +89,7 @@ static void lidt(void)
  */
 static void timer_handler(struct registers regs)
 {
-	printk("Timer hanlder\n");
+//	printk("Timer hanlder\n");
 }
 
 /////////////////////////////////////////////////
@@ -141,5 +135,10 @@ void irq_handler(struct registers regs)
 
 	if (handlers[regs.int_no].func != NULL)
 		handlers[regs.int_no].func(regs);
+}
+
+inline void set_handler_func(int idx, void (*f)(struct registers regs))
+{
+	handlers[idx].func = f;
 }
 

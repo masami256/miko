@@ -16,7 +16,7 @@ struct handler_define  handler_info[HANDLER_INFO_NUM] = {
 	{ (u_int32_t) isr_gate10, KERN_CS, GATE_TYPE_INTR_GATE },
 	{ (u_int32_t) isr_gate11, KERN_CS, GATE_TYPE_INTR_GATE },
 	{ (u_int32_t) isr_gate12, KERN_CS, GATE_TYPE_INTR_GATE },
-	{ (u_int32_t) isr_gate13, KERN_CS, GATE_TYPE_INTR_GATE },
+	{ (u_int32_t) isr_gate13, KERN_CS, GATE_TYPE_TRAP_GATE },
 	{ (u_int32_t) isr_gate14, KERN_CS, GATE_TYPE_INTR_GATE },
 	{ (u_int32_t) isr_gate15, KERN_CS, GATE_TYPE_INTR_GATE },
 	{ (u_int32_t) isr_gate16, KERN_CS, GATE_TYPE_INTR_GATE },
