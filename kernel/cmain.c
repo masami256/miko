@@ -1,8 +1,8 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/multiboot.h>
+#include <mikoOS/printk.h>
 #include "gdt.h"
 #include "interrupt.h"
-#include "printk.h"
 #include "mm/mm.h"
 
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))

@@ -1,6 +1,6 @@
 #include <mikoOS/kernel.h>
+#include <mikoOS/printk.h>
 #include "mm.h"
-#include "../printk.h"
 #include "../interrupt.h"
 
 static void page_fault(struct registers regs);

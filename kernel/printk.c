@@ -1,4 +1,4 @@
-#include "printk.h"
+#include <mikoOS/printk.h>
 
 #define PRINTK_BUF_SIZE (64 + 1)
 

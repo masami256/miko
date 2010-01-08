@@ -1,9 +1,10 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/lock.h>
+#include <mikoOS/printk.h>
 #include <asm/io.h>
 #include "interrupt.h"
 #include "interrupt_handler.h"
-#include "printk.h"
+
 
 #define INTERRUPT_HANDLER_NUM 256
 
