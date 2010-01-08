@@ -85,7 +85,7 @@ static void lidt(void)
 }
 
 /**
- * Timer handler test function urrently.
+ * Timer handler test function currently.
  */
 static void timer_handler(struct registers regs)
 {
@@ -124,6 +124,10 @@ void setup_inir(void)
 void isr_handler(struct registers regs) 
 {
 	printk("ISR 0x%x\n", regs.int_no);
+
+	if (handlers[regs.int_no].func != NULL)
+		handlers[regs.int_no].func(regs);
+
 }
 
 void irq_handler(struct registers regs) 

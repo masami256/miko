@@ -9,6 +9,12 @@ static void page_fault(struct registers regs);
 pgd_t page_directory[1024] __attribute__((aligned(0x1000))); 
 pte_t pte[1024];
 
+/////////////////////////////////////////////////
+// private functions
+/////////////////////////////////////////////////
+/**
+ * Setup PGD and PTE.
+ */
 static void setup_pte(void)
 {
 	unsigned int address = 0; 
@@ -23,11 +29,17 @@ static void setup_pte(void)
 	}
 }
 
+/**
+ * Load PGD into cr3 register.
+ */
 static void set_cr3(void)
 {
 	__asm__ __volatile__("mov %0, %%cr3":: "b"(page_directory));
 }
 
+/**
+ * Enable Paging feature.
+ */
 static void set_cr0(void)
 {
 	u_int32_t cr0;
@@ -35,23 +47,6 @@ static void set_cr0(void)
 	__asm__ __volatile__("mov %%cr0, %0": "=b"(cr0));
 	cr0 |= 0x80000000;
 	__asm__ __volatile__("mov %0, %%cr0":: "b"(cr0));
-}
-
-void setup_paging(void)
-{
-	printk("Setup paging.\n");
-
-	printk("Start setup_pte.\n");
-	setup_pte();
-
-	printk("Set page fault handler.\n");
-	set_handler_func(0x0e, &page_fault);
-
-	printk("Set cr3: load page directory table.\n");
-	set_cr3();
-
-	printk("set cr0: enable paging\n");
-	set_cr0();
 }
 
 /**
@@ -62,3 +57,24 @@ static void page_fault(struct registers regs)
 	printk("Page Fault\n");
 	while (1);
 }
+
+/////////////////////////////////////////////////
+// public functions
+/////////////////////////////////////////////////
+
+/**
+ * Setup PGD, PTE then enable paging.
+ */
+void setup_paging(void)
+{
+	printk("Setup paging.\n");
+
+	setup_pte();
+
+	set_handler_func(0x0e, &page_fault);
+
+	set_cr3();
+
+	set_cr0();
+}
+
