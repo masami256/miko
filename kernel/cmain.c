@@ -1,6 +1,8 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/multiboot.h>
 #include <mikoOS/printk.h>
+#include <mikoOS/pci.h>
+
 #include "gdt.h"
 #include "interrupt.h"
 #include "mm/mm.h"
@@ -39,6 +41,9 @@ void cmain(unsigned long magic, unsigned long addr)
 
 	// Setup paging.
 	setup_paging();
+
+	// Init PCI
+	find_pci_device();
 
 	printk("Welcome to mikoOS!\n");
 

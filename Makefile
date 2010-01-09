@@ -11,6 +11,10 @@ boot_dir = boot
 kern_dir = kernel
 kern_mm_dir = $(kern_dir)/mm
 
+drivers_dir = drivers
+driver_pci_dir = $(drivers_dir)/pci
+driver_blk_dir = $(drivers_dir)/block
+
 objs = $(boot_dir)/head.o \
 	$(kern_dir)/cmain.o \
 	$(kern_dir)/gdt.o \
@@ -18,7 +22,9 @@ objs = $(boot_dir)/head.o \
 	$(kern_dir)/interrupt.o \
 	$(kern_dir)/intr_gate.o \
 	$(kern_dir)/printk.o \
-	$(kern_mm_dir)/mm.o
+	$(kern_mm_dir)/mm.o \
+	$(driver_pci_dir)/pci.o \
+	$(driver_blk_dir)/disk_driver.o
 
 all: build $(objs)
 	$(LD) $(LDFLAGS) $(objs) -o $(kernel) 
@@ -27,6 +33,8 @@ build:
 	cd $(boot_dir) && make
 	cd $(kern_mm_dir) && make
 	cd $(kern_dir) && make
+	cd $(driver_pci_dir) && make
+	cd $(driver_blk_dir) && make
 
 install: loop_dev_install
 test: bochs_test
@@ -48,6 +56,8 @@ clean:
 	cd $(boot_dir) && make clean 
 	cd $(kern_dir) && make clean
 	cd $(kern_mm_dir) && make clean
+	cd $(driver_pci_dir) && make clean
+	cd $(driver_blk_dir) && make clean
 	-rm -f $(kernel) *.log
 	find . -name '*~' -exec rm {} \; 
 
