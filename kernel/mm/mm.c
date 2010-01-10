@@ -17,7 +17,7 @@ pte_t pte[1024];
  */
 static void setup_pte(void)
 {
-	unsigned int address = 0; 
+	unsigned long address = 0; 
 	int i;
 
 	page_directory[0] = (pgd_t) &pte | PAGE_PRESENT | PAGE_RW;
