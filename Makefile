@@ -15,6 +15,8 @@ drivers_dir = drivers
 driver_pci_dir = $(drivers_dir)/pci
 driver_blk_dir = $(drivers_dir)/block
 
+klib_dir = klibs
+
 objs = $(boot_dir)/head.o \
 	$(kern_dir)/cmain.o \
 	$(kern_dir)/gdt.o \
@@ -24,7 +26,8 @@ objs = $(boot_dir)/head.o \
 	$(kern_dir)/printk.o \
 	$(kern_mm_dir)/mm.o \
 	$(driver_pci_dir)/pci.o \
-	$(driver_blk_dir)/disk_driver.o
+	$(driver_blk_dir)/disk_driver.o \
+	$(klib_dir)/string.o
 
 all: build $(objs)
 	$(LD) $(LDFLAGS) $(objs) -o $(kernel) 
@@ -35,6 +38,7 @@ build:
 	cd $(kern_dir) && make
 	cd $(driver_pci_dir) && make
 	cd $(driver_blk_dir) && make
+	cd $(klib_dir) && make
 
 install: loop_dev_install
 test: bochs_test
@@ -58,6 +62,7 @@ clean:
 	cd $(kern_mm_dir) && make clean
 	cd $(driver_pci_dir) && make clean
 	cd $(driver_blk_dir) && make clean
+	cd $(klib_dir) && make clean
 	-rm -f $(kernel) *.log
 	find . -name '*~' -exec rm {} \; 
 
