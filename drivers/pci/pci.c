@@ -2,6 +2,7 @@
 #include <mikoOS/printk.h>
 #include <asm/io.h>
 #include <mikoOS/pci.h>
+#include <mikoOS/string.h>
 
 // PCI CONFIG_ADDRESS
 #define PCI_CONFIG_ADDRESS 0x0cf8
@@ -16,24 +17,34 @@
 #define PCI_DEVICE_MAX 31
 #define PCI_FUNCTION_MAX 7
 
+
+/////////////////////////////////////////////////
+// private functions
+/////////////////////////////////////////////////
 static void finish_access_to_config_data(struct pci_configuration_register *reg);
 static void write_pci_config_address(struct pci_configuration_register *reg);
 
-static void memset(void *addr, int c, size_t size)
-{
-	size_t i;
-	char *p = addr;
+static u_int32_t read_pci_data(struct pci_configuration_register *reg);
+static u_int32_t read_pci_reg00(struct pci_configuration_register *reg);
+static u_int8_t is_multi_function_dev(struct pci_configuration_register *reg);
+static u_int32_t read_pci_class(struct pci_configuration_register *reg);
 
-	for (i = 0; i < size; i++)
-		p[i] = c;
-}
+static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev);
 
+/**
+ * Set ENABLE bit to 0 and write data to CONFIG_ADDRESS.
+ */
 static void finish_access_to_config_data(struct pci_configuration_register *reg)
 {
 	reg->enable_bit = 0;
 	write_pci_config_address(reg);
 }
 
+/**
+ * Read CONFIG_DATA.
+ * @param reg it should be set bus, device, function and so forth.
+ * @return data from CONFIG_DATA.
+ */
 static u_int32_t read_pci_data(struct pci_configuration_register *reg)
 {
 	u_int32_t data;
@@ -50,6 +61,10 @@ static u_int32_t read_pci_data(struct pci_configuration_register *reg)
 	return data;
 }
 
+/**
+ * Write data to CONFIG_ADDRESS.
+ * @param reg it should be set bus, device, function and so forth.
+ */
 static void write_pci_config_address(struct pci_configuration_register *reg)
 {
 	u_int32_t data;
@@ -65,7 +80,11 @@ static void write_pci_config_address(struct pci_configuration_register *reg)
 	outl(PCI_CONFIG_ADDRESS, data);	
 }
 
-
+/**
+ * Check if this device is multi function or not.
+ * @param reg it should be set bus, device, function and so forth.
+ * @return 1 if it is a multi function, 0 is not multi function.
+ */
 static u_int8_t is_multi_function_dev(struct pci_configuration_register *reg)
 {
 	u_int32_t data = 0;
@@ -77,18 +96,23 @@ static u_int8_t is_multi_function_dev(struct pci_configuration_register *reg)
 	return ((data & 0x800000) >> 23) & 0x01;
 }
 
+/**
+ * Read pci class.
+ * @param reg it should be set bus, device, function and so forth.
+ * @return PCI class.
+ */
 static u_int32_t read_pci_class(struct pci_configuration_register *reg)
 {
-	u_int32_t data;
-
 	reg->reg_num = 0x08;
 
-	data = read_pci_data(reg);
-
-	return data;
+	return read_pci_data(reg);
 }
 
-
+/**
+ * Read CONFIG_DATA by register 0x00.
+ * @param reg it should be set bus, device, function and so forth.
+ * @return vendor id and device id.
+ */
 static u_int32_t read_pci_reg00(struct pci_configuration_register *reg)
 {
 	reg->reg_num = 0;
@@ -96,6 +120,12 @@ static u_int32_t read_pci_reg00(struct pci_configuration_register *reg)
 	return read_pci_data(reg);
 }
 
+/**
+ * Find PCI device by bus number and device number.
+ * @param bus bus numer.
+ * @param dev device number.
+ * @return always 0.
+ */
 static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 {
 	u_int32_t data;
@@ -112,7 +142,7 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 		u_int32_t class;
 		int i;
 
-		// if it's multi funtion we get its class.
+		// Check all function numbers.
 		for (i = 0; i < PCI_FUNCTION_MAX; i++) {
 			reg.func_num = i;
 			
@@ -129,6 +159,12 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 	return 0;
 }
 
+/////////////////////////////////////////////////
+// public functions
+/////////////////////////////////////////////////
+/**
+ * Find all PCI devices.
+ */
 void find_pci_device(void)
 {
 	int bus, dev;
