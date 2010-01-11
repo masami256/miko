@@ -74,9 +74,7 @@ static u_int8_t is_multi_function_dev(struct pci_configuration_register *reg)
 
 	data = read_pci_data(reg);
 
-	// FIXME: need to check device correctly.
-//	return ((data & 0x800000) >> 23) & 0x01;
-	return 1;
+	return ((data & 0x800000) >> 23) & 0x01;
 }
 
 static u_int32_t read_pci_class(struct pci_configuration_register *reg)
@@ -100,7 +98,7 @@ static u_int32_t read_pci_reg00(struct pci_configuration_register *reg)
 
 static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 {
-	u_int32_t data, ret;
+	u_int32_t data;
 	struct pci_configuration_register reg;
 
 	// At first, check function number zero.
@@ -114,25 +112,19 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 		u_int32_t class;
 		int i;
 
-		// Function number 0 can be multi function device.
-		// Check if it's multi funtion device.
-		ret = is_multi_function_dev(&reg);
-
 		// if it's multi funtion we get its class.
-		if (ret) {
-			for (i = 0; i < PCI_FUNCTION_MAX; i++) {
-				reg.func_num = i;
-				
-				data = read_pci_reg00(&reg);
-				class = read_pci_class(&reg);
-
-				if (class != 0xffffffff) {
-					printk("Found Device: Bus %d : Devfn %d : Vender 0x%x : Device 0x%x : func_num %d : Class 0x%x\n", 
-					       bus, dev, data & 0xffff, (data >> 16) & 0xffff, i, class);
-				}
-			} 
+		for (i = 0; i < PCI_FUNCTION_MAX; i++) {
+			reg.func_num = i;
+			
+			data = read_pci_reg00(&reg);
+			class = read_pci_class(&reg);
+			
+			if (class != 0xffffffff) {
+				printk("Found Device: Bus %d : Devfn %d : Vender 0x%x : Device 0x%x : func_num %d : Class 0x%x\n", 
+				       bus, dev, data & 0xffff, (data >> 16) & 0xffff, i, class);
+			}
 		} 
-	}
+	} 
 	
 	return 0;
 }
