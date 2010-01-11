@@ -50,7 +50,7 @@ bochs_test:
 	cd test && bochs -f .bochsrc 2>&1 | tee test.log&
 
 qemu_test:
-	kvm -boot a -fda test/img/floppy.img &
+	kvm -boot a -fda test/img/floppy.img -hda test/img/hda.img&
 
 clean:
 	cd $(boot_dir) && make clean 
