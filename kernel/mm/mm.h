@@ -15,5 +15,6 @@ typedef u_int32_t pte_t;
 #define PTE_SIZE     1024
 
 void setup_paging(void);
+u_int32_t get_free_pages(u_int32_t pages);
 
 #endif // __MM_H
