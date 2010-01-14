@@ -2,15 +2,37 @@
 #include <mikoOS/multiboot.h>
 #include <mikoOS/printk.h>
 #include <mikoOS/pci.h>
+#include <mikoOS/mm.h>
 
 #include "gdt.h"
 #include "interrupt.h"
-#include "mm/mm.h"
+
 
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
 // cmain() is called from head.S.
 extern void cmain(unsigned long magic, unsigned long addr);
+
+void show_startup_message(void)
+{
+	char *p;
+	u_int32_t addr;
+
+	addr = get_free_pages(2);
+	if (addr) {
+		int i;
+		p = (char *) addr;
+
+		for (i = 0; i < 26; i++)
+			p[i] = i + 'a';
+		for (i = 0 ; i < 26; i++)
+			p[i + 26] = i + 'A';
+		printk("get_free_page()test [%s]\n", p);
+
+	}
+	printk("Welcome to mikoOS!\n");
+
+}
 
 /**
  * This function is called from head.S
@@ -45,7 +67,7 @@ void cmain(unsigned long magic, unsigned long addr)
 	// Init PCI
 	find_pci_device();
 
-	printk("Welcome to mikoOS!\n");
+	show_startup_message();
 
 	while (1);
 

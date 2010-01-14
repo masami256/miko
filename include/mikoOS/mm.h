@@ -1,5 +1,5 @@
-#ifndef __MM_H
-#define __MM_H
+#ifndef __MIKOOS_MM_H
+#define __MIKOOS_MM_H
 
 typedef u_int32_t pgd_t;
 typedef u_int32_t pte_t;
@@ -17,4 +17,4 @@ typedef u_int32_t pte_t;
 void setup_paging(void);
 u_int32_t get_free_pages(u_int32_t pages);
 
-#endif // __MM_H
+#endif // __MIKOOS_MM_H
