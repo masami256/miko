@@ -97,6 +97,7 @@ u_int32_t get_free_pages(u_int32_t pages)
 	u_int32_t i;
 	u_int32_t enough;
 	u_int32_t ret = 0;
+	bool found = false;
 
 	enough = 0;
 	for (i = 0; i < PAGE_SIZE; i++) {
@@ -111,6 +112,7 @@ u_int32_t get_free_pages(u_int32_t pages)
 			clear_access_bit(current_idx);
 			if (enough == pages) {
 				current_idx++;
+				found = true;
 				break;
 			}
 		} else {
@@ -118,7 +120,7 @@ u_int32_t get_free_pages(u_int32_t pages)
 		}
 		current_idx++;
 	} 
-	return ret;
+	return found ? ret : 0;
 }
 
 /**
