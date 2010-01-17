@@ -3,6 +3,7 @@
 #include <mikoOS/printk.h>
 #include <mikoOS/pci.h>
 #include <mikoOS/mm.h>
+#include <mikoOS/kmalloc.h>
 
 #include "gdt.h"
 #include "interrupt.h"
@@ -64,10 +65,13 @@ void cmain(unsigned long magic, unsigned long addr)
 	// Setup paging.
 	setup_paging();
 
+	init_kmalloc_area();
 	// Init PCI
 	find_pci_device();
 
 	show_startup_message();
+
+	kmalloc_test();
 
 	while (1);
 

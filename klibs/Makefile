@@ -3,7 +3,8 @@ include ../Makefile.inc
 CFLAGS += -I../include  -I.
 
 objs = string.o \
-	printk.o
+	printk.o \
+	kmalloc.o
 
 all: $(objs)
 
