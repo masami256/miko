@@ -17,6 +17,8 @@ static struct kmalloc_header *next_free_area;
 #define KMALLOC_ALIGN sizeof(void *)
 #define KMALLOC_USED 0x01
 
+#define KMALLOC_MEMORY_SIZE (PAGE_SIZE * 2)
+
 int init_kmalloc_area(void)
 {
 	unsigned long n;
@@ -25,12 +27,12 @@ int init_kmalloc_area(void)
 	if (!kmalloc_area)
 		return -1;
 
-	memset(kmalloc_area, 0, 1024 * 2);
+	memset(kmalloc_area, 0, KMALLOC_MEMORY_SIZE);
 
 	n = (unsigned long) kmalloc_area;
 	base = (struct kmalloc_header *) n;
 
-	base->size = 1024;
+	base->size = KMALLOC_MEMORY_SIZE;
 	base->prev = 0;
 	next_free_area = base;
 
