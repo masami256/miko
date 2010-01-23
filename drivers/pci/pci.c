@@ -3,6 +3,7 @@
 #include <asm/io.h>
 #include <mikoOS/pci.h>
 #include <mikoOS/string.h>
+#include <mikoOS/kmalloc.h>
 
 // PCI CONFIG_ADDRESS
 #define PCI_CONFIG_ADDRESS 0x0cf8
@@ -17,6 +18,29 @@
 #define PCI_DEVICE_MAX 31
 #define PCI_FUNCTION_MAX 7
 
+// This structure represents PCI's CONFIG_ADDRESS register.
+struct pci_configuration_register {
+	u_int8_t enable_bit;      // 31: enable bit.
+	u_int8_t reserved;        // 24-30: reserved.
+	u_int8_t bus_num;         // 16-23: bus number.
+	u_int8_t dev_num;         // 11-15: device number.
+	u_int8_t func_num;        // 8-10: function number.
+	u_int8_t reg_num;         // 2-7: regster number.
+	u_int8_t bit0;            // 0-1: always 0.
+};
+
+// Store PCI device information.
+struct pci_device {
+	u_int8_t bus;
+	u_int8_t devfn;
+	u_int8_t vender;
+	u_int8_t devid;
+	u_int32_t class;
+	u_int8_t func;
+	struct pci_device *next;
+};
+
+static struct pci_device pci_device_head;
 
 /////////////////////////////////////////////////
 // private functions
@@ -30,6 +54,29 @@ static u_int8_t is_multi_function_dev(struct pci_configuration_register *reg);
 static u_int32_t read_pci_class(struct pci_configuration_register *reg);
 
 static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev);
+
+static bool store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, u_int32_t data, u_int8_t func, u_int32_t class);
+
+static bool 
+store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, u_int32_t data, u_int8_t func, u_int32_t class)
+{
+	struct pci_device *p;
+
+	p = kmalloc(sizeof(*p));
+	if (!p)
+		return false;
+
+	p->bus = bus;
+	p->devfn = devfn;
+	p->vender = data & 0xffff;
+	p->devid = (data >> 16) & 0xffff;
+	p->class = class;
+	p->func = (u_int8_t) func;
+	
+	p->next = pci_device_head.next;
+	pci_device_head.next = p;
+}
+
 
 /**
  * Set ENABLE bit to 0 and write data to CONFIG_ADDRESS.
@@ -130,6 +177,7 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 {
 	u_int32_t data;
 	struct pci_configuration_register reg;
+	bool b;
 
 	// At first, check function number zero.
 	memset(&reg, 0, sizeof(reg));
@@ -150,8 +198,11 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 			class = read_pci_class(&reg);
 			
 			if (class != 0xffffffff) {
-				printk("Found Device: Bus %d : Devfn %d : Vender 0x%x : Device 0x%x : func_num %d : Class 0x%x\n", 
-				       bus, dev, data & 0xffff, (data >> 16) & 0xffff, i, class);
+				b = store_pci_device_to_list(bus, dev, data, i, class);
+				if (!b) {
+					printk("kmalloc failed %s:%s at %d\n", __FILE__, __FUNCTION__, __LINE__);
+					while (1);
+				}
 			}
 		} 
 	} 
@@ -159,6 +210,11 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 	return 0;
 }
 
+static void init_pci_data_list(void)
+{
+	pci_device_head.next = &pci_device_head;
+}
+      
 /////////////////////////////////////////////////
 // public functions
 /////////////////////////////////////////////////
@@ -171,11 +227,27 @@ void find_pci_device(void)
 
 	printk("start find_pci_device\n");
 
+	// setup pci device list structure.
+	init_pci_data_list();
+
 	for (bus = 0; bus < PCI_BUS_MAX; bus++) {
 		for (dev = 0; dev < PCI_DEVICE_MAX; dev++) {
 			find_pci_data(bus, dev);
 		}
 	}
+	show_all_pci_device();
 }
 
-	
+/**
+ * Printing out all PCI devices which kernel found.
+ */
+void show_all_pci_device(void)
+{
+	struct pci_device *p;
+
+	for (p = pci_device_head.next; p != &pci_device_head; p = p->next)
+		printk("Found Device: Bus %d : Devfn %d : Vender 0x%x : Device 0x%x : func_num %d : Class 0x%x\n", 
+		       p->bus, p->devfn, p->vender, p->devid, p->func, p->class);
+
+}
+
