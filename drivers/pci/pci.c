@@ -37,6 +37,8 @@ struct pci_device {
 	u_int8_t devid;
 	u_int32_t class;
 	u_int8_t func;
+	u_int8_t dev_type;
+	u_int8_t multi;
 	struct pci_device *next;
 };
 
@@ -50,15 +52,18 @@ static void write_pci_config_address(struct pci_configuration_register *reg);
 
 static u_int32_t read_pci_data(struct pci_configuration_register *reg);
 static u_int32_t read_pci_reg00(struct pci_configuration_register *reg);
-static u_int8_t is_multi_function_dev(struct pci_configuration_register *reg);
 static u_int32_t read_pci_class(struct pci_configuration_register *reg);
-
+static u_int32_t read_pci_head_type(struct pci_configuration_register *reg);
 static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev);
 
-static bool store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, u_int32_t data, u_int8_t func, u_int32_t class);
+static bool store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, 
+				     u_int32_t data, u_int8_t func, 
+				     u_int32_t class, u_int32_t head);
 
 static bool 
-store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, u_int32_t data, u_int8_t func, u_int32_t class)
+store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, 
+			 u_int32_t data, u_int8_t func, 
+			 u_int32_t class, u_int32_t head)
 {
 	struct pci_device *p;
 
@@ -72,7 +77,8 @@ store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, u_int32_t data, u_int8_t 
 	p->devid = (data >> 16) & 0xffff;
 	p->class = class;
 	p->func = func;
-	
+	p->dev_type = (head >> 16) & 0xff;
+	p->multi = ((head & 0x800000) >> 23) & 0x01;
 	p->next = pci_device_head.next;
 	pci_device_head.next = p;
 
@@ -130,22 +136,6 @@ static void write_pci_config_address(struct pci_configuration_register *reg)
 }
 
 /**
- * Check if this device is multi function or not.
- * @param reg it should be set bus, device, function and so forth.
- * @return 1 if it is a multi function, 0 is not multi function.
- */
-static u_int8_t is_multi_function_dev(struct pci_configuration_register *reg)
-{
-	u_int32_t data = 0;
-	
-	reg->reg_num = 0x0c;
-
-	data = read_pci_data(reg);
-
-	return ((data & 0x800000) >> 23) & 0x01;
-}
-
-/**
  * Read pci class.
  * @param reg it should be set bus, device, function and so forth.
  * @return PCI class.
@@ -165,6 +155,18 @@ static u_int32_t read_pci_class(struct pci_configuration_register *reg)
 static u_int32_t read_pci_reg00(struct pci_configuration_register *reg)
 {
 	reg->reg_num = 0;
+
+	return read_pci_data(reg);
+}
+
+/**
+ * Read CONFIG_DATA by register 0x0c to check if it's PCI brigdge or not.
+ * @param reg it should be set bus, device, function and so forth.
+ * @return vendor id and device id.
+ */
+static u_int32_t read_pci_head_type(struct pci_configuration_register *reg)
+{
+	reg->reg_num = 0x0c;
 
 	return read_pci_data(reg);
 }
@@ -190,6 +192,7 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 	data = read_pci_reg00(&reg);
 	if (data != 0xffffffff) {
 		u_int32_t class;
+		u_int32_t head;
 		int i;
 
 		// Check all function numbers.
@@ -198,9 +201,10 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 			
 			data = read_pci_reg00(&reg);
 			class = read_pci_class(&reg);
-			
+			head = read_pci_head_type(&reg);
+
 			if (class != 0xffffffff) {
-				b = store_pci_device_to_list(bus, dev, data, i, class);
+				b = store_pci_device_to_list(bus, dev, data, i, class, head);
 				if (!b) {
 					printk("kmalloc failed %s:%s at %d\n", __FILE__, __FUNCTION__, __LINE__);
 					while (1);
@@ -248,8 +252,11 @@ void show_all_pci_device(void)
 	struct pci_device *p;
 
 	for (p = pci_device_head.next; p != &pci_device_head; p = p->next)
-		printk("Found Device: Bus %d : Devfn %d : Vender 0x%x : Device 0x%x : func_num %d : Class 0x%x\n", 
-		       p->bus, p->devfn, p->vender, p->devid, p->func, p->class);
+		printk("Found Device: Bus %d : Devfn %d : Vender 0x%x : Device 0x%x : func_num %d : Class 0x%x : dev_type = 0x%x : %s\n", 
+		       p->bus, p->devfn, p->vender, p->devid, 
+		       p->func, p->class, p->dev_type,
+		       p->multi == 0 ? "not multi device" : "multi device");
+
 
 }
 
