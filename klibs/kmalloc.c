@@ -4,12 +4,16 @@
 #include <mikoOS/printk.h>
 #include <mikoOS/string.h>
 
+// kmalloc header has 2 member.
+// one is prev which is point previous allocated address.
+// size is allocated size plus this header size.
 struct  kmalloc_header {
 	unsigned long prev;
 	u_int32_t size;
 };
 static char *kmalloc_area;
 
+// linked list for kmalloc_header.
 static struct kmalloc_header *base;
 static struct kmalloc_header *next_free_area;
 
@@ -17,8 +21,14 @@ static struct kmalloc_header *next_free_area;
 #define KMALLOC_ALIGN sizeof(void *)
 #define KMALLOC_USED 0x01
 
+// 8KB is reserved for kmalloc.x
 #define KMALLOC_MEMORY_SIZE (PAGE_SIZE * 2)
 
+/**
+ * Init buffer for kmalloc.
+ * Get some pages and init linked list.
+ * @return if returns -1 we don't have enough pages. 0 is success.
+ */
 int init_kmalloc_area(void)
 {
 	unsigned long n;
@@ -40,6 +50,11 @@ int init_kmalloc_area(void)
 	return 0;
 }
 
+/**
+ * This is the main logic.
+ * @param size will be celling to align sizeof(void *).
+ * @return non null if success.
+ */
 void *kmalloc(size_t size)
 {
 	struct kmalloc_header *p;
@@ -91,6 +106,10 @@ void *kmalloc(size_t size)
 
 }
 
+/**
+ * free allocated area.
+ * @param ptr has to point to head address whcic kmalloc returned.
+ */
 void kfree(void *ptr)
 {
 	unsigned long addr = 0; 
@@ -136,6 +155,7 @@ void kfree(void *ptr)
 
 }
 
+// for test.
 int kmalloc_test(void)
 {
 	char *p, *pp;
