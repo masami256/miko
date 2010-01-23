@@ -71,10 +71,12 @@ store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, u_int32_t data, u_int8_t 
 	p->vender = data & 0xffff;
 	p->devid = (data >> 16) & 0xffff;
 	p->class = class;
-	p->func = (u_int8_t) func;
+	p->func = func;
 	
 	p->next = pci_device_head.next;
 	pci_device_head.next = p;
+
+	return true;
 }
 
 
