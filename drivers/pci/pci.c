@@ -260,3 +260,23 @@ void show_all_pci_device(void)
 
 }
 
+/**
+ * Check PCI device.
+ * @param vender id.
+ * @param device number.
+ * @param function number.
+ * @return if found it returns true.
+ */
+bool has_pci_device(u_int16_t vender, u_int16_t device, u_int8_t function)
+{
+	struct pci_device *p;
+
+	for (p = pci_device_head.next; p != &pci_device_head; p = p->next) {
+		if (p->vender == vernder &&
+		    p->devid == device &&
+		    p->function == function)
+			return true;
+	}
+
+	return false;
+}
