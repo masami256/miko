@@ -2,7 +2,7 @@ include ../../Makefile.inc
 
 CFLAGS += -I../../include -I.
 
-objs = disk_driver.o
+objs = ata.o
 
 all: $(objs)
 	
