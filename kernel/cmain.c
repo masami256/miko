@@ -4,6 +4,8 @@
 #include <mikoOS/pci.h>
 #include <mikoOS/mm.h>
 #include <mikoOS/kmalloc.h>
+#include <mikoOS/block_driver.h>
+#include <mikoOS/ata.h>
 
 #include "gdt.h"
 #include "interrupt.h"
@@ -16,23 +18,7 @@ extern void cmain(unsigned long magic, unsigned long addr);
 
 void show_startup_message(void)
 {
-	char *p;
-	u_int32_t addr;
-
-	addr = get_free_pages(2);
-	if (addr) {
-		int i;
-		p = (char *) addr;
-
-		for (i = 0; i < 26; i++)
-			p[i] = i + 'a';
-		for (i = 0 ; i < 26; i++)
-			p[i + 26] = i + 'A';
-		printk("get_free_page()test [%s]\n", p);
-
-	}
 	printk("Welcome to mikoOS!\n");
-
 }
 
 /**
@@ -70,6 +56,11 @@ void cmain(unsigned long magic, unsigned long addr)
 
 	// Init PCI
 	find_pci_device();
+
+	// Init ATA device.
+	init_ata_disk_driver();
+
+	show_all_registered_driver();
 
 	show_startup_message();
 
