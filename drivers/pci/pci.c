@@ -33,8 +33,8 @@ struct pci_configuration_register {
 struct pci_device {
 	u_int8_t bus;
 	u_int8_t devfn;
-	u_int8_t vender;
-	u_int8_t devid;
+	u_int16_t vender;
+	u_int16_t devid;
 	u_int32_t class;
 	u_int8_t func;
 	u_int8_t dev_type;
