@@ -272,9 +272,9 @@ bool has_pci_device(u_int16_t vender, u_int16_t device, u_int8_t function)
 	struct pci_device *p;
 
 	for (p = pci_device_head.next; p != &pci_device_head; p = p->next) {
-		if (p->vender == vernder &&
+		if (p->vender == vender &&
 		    p->devid == device &&
-		    p->function == function)
+		    p->func == function)
 			return true;
 	}
 
