@@ -61,7 +61,7 @@ void cmain(unsigned long magic, unsigned long addr)
 	init_ata_disk_driver();
 
 	show_all_registered_driver();
-
+	
 	show_startup_message();
 
 	while (1);

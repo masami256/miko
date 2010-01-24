@@ -10,6 +10,10 @@ struct pci_device_info {
 
 void find_pci_device(void);
 void show_all_pci_device(void);
-bool has_pci_device(u_int16_t vender, u_int16_t device, u_int8_t function);
+struct pci_device *get_pci_device(u_int16_t vender, u_int16_t device, u_int8_t function);
+
+void pci_data_write(struct pci_device *pci, u_int8_t reg_num, u_int32_t data);
+u_int32_t pci_data_read(struct pci_device *pci, u_int8_t reg_num);
+
 
 #endif // __MIKOOS_PCI_H

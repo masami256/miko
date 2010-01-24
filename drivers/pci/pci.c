@@ -39,10 +39,16 @@ struct pci_device {
 	u_int8_t func;
 	u_int8_t dev_type;
 	u_int8_t multi;
-	struct pci_device *next;
 };
 
-static struct pci_device pci_device_head;
+struct pci_device_list {
+	struct pci_device data;
+	struct pci_device_list *next;
+};
+
+static struct pci_device_list pci_device_head = {
+	.next = &pci_device_head,
+};
 
 /////////////////////////////////////////////////
 // private functions
@@ -50,7 +56,9 @@ static struct pci_device pci_device_head;
 static void finish_access_to_config_data(struct pci_configuration_register *reg);
 static void write_pci_config_address(struct pci_configuration_register *reg);
 
+static void write_pci_data(struct pci_configuration_register *reg, u_int32_t data);
 static u_int32_t read_pci_data(struct pci_configuration_register *reg);
+
 static u_int32_t read_pci_reg00(struct pci_configuration_register *reg);
 static u_int32_t read_pci_class(struct pci_configuration_register *reg);
 static u_int32_t read_pci_head_type(struct pci_configuration_register *reg);
@@ -65,20 +73,20 @@ store_pci_device_to_list(u_int8_t bus, u_int8_t devfn,
 			 u_int32_t data, u_int8_t func, 
 			 u_int32_t class, u_int32_t head)
 {
-	struct pci_device *p;
+	struct pci_device_list *p;
 
 	p = kmalloc(sizeof(*p));
 	if (!p)
 		return false;
 
-	p->bus = bus;
-	p->devfn = devfn;
-	p->vender = data & 0xffff;
-	p->devid = (data >> 16) & 0xffff;
-	p->class = class;
-	p->func = func;
-	p->dev_type = (head >> 16) & 0xff;
-	p->multi = ((head & 0x800000) >> 23) & 0x01;
+	p->data.bus = bus;
+	p->data.devfn = devfn;
+	p->data.vender = data & 0xffff;
+	p->data.devid = (data >> 16) & 0xffff;
+	p->data.class = class;
+	p->data.func = func;
+	p->data.dev_type = (head >> 16) & 0xff;
+	p->data.multi = ((head & 0x800000) >> 23) & 0x01;
 	p->next = pci_device_head.next;
 	pci_device_head.next = p;
 
@@ -115,6 +123,25 @@ static u_int32_t read_pci_data(struct pci_configuration_register *reg)
 
 	return data;
 }
+
+/**
+ * Write to CONFIG_DATA.
+ * @param reg it should be set bus, device, function and so forth.
+ * @param data should be write to CONFIG_DATA
+ * @return data from CONFIG_DATA.
+ */
+static void write_pci_data(struct pci_configuration_register *reg, u_int32_t data)
+{
+	// Enable bit should be 1 before read PCI_DATA.
+	reg->enable_bit = 1;
+
+	// write data to CONFIG_ADDRESS.
+	write_pci_config_address(reg);
+	
+	outl(CONFIG_DATA_1, data);
+	finish_access_to_config_data(reg);
+}
+
 
 /**
  * Write data to CONFIG_ADDRESS.
@@ -216,10 +243,6 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 	return 0;
 }
 
-static void init_pci_data_list(void)
-{
-	pci_device_head.next = &pci_device_head;
-}
       
 /////////////////////////////////////////////////
 // public functions
@@ -230,11 +253,6 @@ static void init_pci_data_list(void)
 void find_pci_device(void)
 {
 	int bus, dev;
-
-	printk("start find_pci_device\n");
-
-	// setup pci device list structure.
-	init_pci_data_list();
 
 	for (bus = 0; bus < PCI_BUS_MAX; bus++) {
 		for (dev = 0; dev < PCI_DEVICE_MAX; dev++) {
@@ -249,13 +267,13 @@ void find_pci_device(void)
  */
 void show_all_pci_device(void)
 {
-	struct pci_device *p;
+	struct pci_device_list *p;
 
 	for (p = pci_device_head.next; p != &pci_device_head; p = p->next)
 		printk("Found Device: Bus %d : Devfn %d : Vender 0x%x : Device 0x%x : func_num %d : Class 0x%x : dev_type = 0x%x : %s\n", 
-		       p->bus, p->devfn, p->vender, p->devid, 
-		       p->func, p->class, p->dev_type,
-		       p->multi == 0 ? "not multi device" : "multi device");
+		       p->data.bus, p->data.devfn, p->data.vender, p->data.devid, 
+		       p->data.func, p->data.class, p->data.dev_type,
+		       p->data.multi == 0 ? "not multi device" : "multi device");
 
 
 }
@@ -265,18 +283,58 @@ void show_all_pci_device(void)
  * @param vender id.
  * @param device number.
  * @param function number.
- * @return if found it returns true.
+ * @return if found it returns pci device information structure.
  */
-bool has_pci_device(u_int16_t vender, u_int16_t device, u_int8_t function)
+struct pci_device *get_pci_device(u_int16_t vender, u_int16_t device, u_int8_t function)
 {
-	struct pci_device *p;
+	struct pci_device_list *p;
 
 	for (p = pci_device_head.next; p != &pci_device_head; p = p->next) {
-		if (p->vender == vender &&
-		    p->devid == device &&
-		    p->func == function)
-			return true;
+		if (p->data.vender == vender &&
+		    p->data.devid == device &&
+		    p->data.func == function)
+			return &p->data;
 	}
 
-	return false;
+	return NULL;
+}
+
+/**
+ * Read data from PCI_DATA.
+ * @param pci
+ * @param reg_num which register you want to read.
+ * @return data from PCI_DATA.
+ */
+u_int32_t pci_data_read(struct pci_device *pci, u_int8_t reg_num)
+{
+	struct pci_configuration_register reg;
+
+	memset(&reg, 0, sizeof(reg));
+
+	reg.reg_num = reg_num;
+	reg.func_num = pci->func;
+	reg.dev_num = pci->devfn;
+	reg.bus_num = pci->bus;
+	
+	return read_pci_data(&reg);
+}
+
+/**
+ * Write data to PCI_DATA.
+ * @param pci
+ * @param reg_num which register you want to write.
+ * @param data.
+ */
+void pci_data_write(struct pci_device *pci, u_int8_t reg_num, u_int32_t data)
+{
+	struct pci_configuration_register reg;
+
+	memset(&reg, 0, sizeof(reg));
+
+	reg.reg_num = reg_num;
+	reg.func_num = pci->func;
+	reg.dev_num = pci->devfn;
+	reg.bus_num = pci->bus;
+	
+	write_pci_data(&reg, data);
 }
