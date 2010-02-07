@@ -31,14 +31,20 @@ struct pci_configuration_register {
 
 // Store PCI device information.
 struct pci_device {
-	u_int8_t bus;
-	u_int8_t devfn;
-	u_int16_t vender;
-	u_int16_t devid;
-	u_int32_t class;
-	u_int8_t func;
-	u_int8_t dev_type;
-	u_int8_t multi;
+	u_int8_t bus;             // bus number.
+	u_int8_t devfn;           // device number.
+	u_int8_t func;            // function number.
+	// 0x0
+	u_int16_t vender;         // vender id.
+	u_int16_t devid;          // device id.
+
+	// 0x08
+	u_int8_t revid;           // revision id.
+	u_int32_t class;          // class code.
+
+	// 0x0c 
+	u_int8_t header_type;     // header type.
+	u_int8_t multi;           // multi device.
 };
 
 struct pci_device_list {
@@ -61,17 +67,17 @@ static u_int32_t read_pci_data(struct pci_configuration_register *reg);
 
 static u_int32_t read_pci_reg00(struct pci_configuration_register *reg);
 static u_int32_t read_pci_class(struct pci_configuration_register *reg);
-static u_int32_t read_pci_head_type(struct pci_configuration_register *reg);
+static u_int32_t read_pci_header_type(struct pci_configuration_register *reg);
 static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev);
 
 static bool store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, 
 				     u_int32_t data, u_int8_t func, 
-				     u_int32_t class, u_int32_t head);
+				     u_int32_t class, u_int32_t header);
 
 static bool 
 store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, 
 			 u_int32_t data, u_int8_t func, 
-			 u_int32_t class, u_int32_t head)
+			 u_int32_t class, u_int32_t header)
 {
 	struct pci_device_list *p;
 
@@ -83,10 +89,10 @@ store_pci_device_to_list(u_int8_t bus, u_int8_t devfn,
 	p->data.devfn = devfn;
 	p->data.vender = data & 0xffff;
 	p->data.devid = (data >> 16) & 0xffff;
-	p->data.class = class;
+	p->data.class = class >> 8;
 	p->data.func = func;
-	p->data.dev_type = (head >> 16) & 0xff;
-	p->data.multi = ((head & 0x800000) >> 23) & 0x01;
+	p->data.header_type = ((header >> 16) & 0xff) & 0x7f;
+	p->data.multi = ((header & 0x800000) >> 23) & 0x01;
 	p->next = pci_device_head.next;
 	pci_device_head.next = p;
 
@@ -119,6 +125,7 @@ static u_int32_t read_pci_data(struct pci_configuration_register *reg)
 	write_pci_config_address(reg);
 	
 	data = inl(CONFIG_DATA_1);
+
 	finish_access_to_config_data(reg);
 
 	return data;
@@ -191,7 +198,7 @@ static u_int32_t read_pci_reg00(struct pci_configuration_register *reg)
  * @param reg it should be set bus, device, function and so forth.
  * @return vendor id and device id.
  */
-static u_int32_t read_pci_head_type(struct pci_configuration_register *reg)
+static u_int32_t read_pci_header_type(struct pci_configuration_register *reg)
 {
 	reg->reg_num = 0x0c;
 
@@ -207,6 +214,9 @@ static u_int32_t read_pci_head_type(struct pci_configuration_register *reg)
 static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 {
 	u_int32_t data;
+	u_int32_t class;
+	u_int32_t header;
+	int i;
 	struct pci_configuration_register reg;
 	bool b;
 
@@ -215,29 +225,21 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 	reg.bus_num = bus;
 	reg.dev_num = dev;
 
-	// get vender id and device id.
-	data = read_pci_reg00(&reg);
-	if (data != 0xffffffff) {
-		u_int32_t class;
-		u_int32_t head;
-		int i;
-
-		// Check all function numbers.
-		for (i = 0; i < PCI_FUNCTION_MAX; i++) {
-			reg.func_num = i;
+	// Check all function numbers.
+	for (i = 0; i < PCI_FUNCTION_MAX; i++) {
+		reg.func_num = i;		
+		data = read_pci_reg00(&reg);
+		if (data != 0xffffffff) {
 			
-			data = read_pci_reg00(&reg);
 			class = read_pci_class(&reg);
-			head = read_pci_head_type(&reg);
-
-			if (class != 0xffffffff) {
-				b = store_pci_device_to_list(bus, dev, data, i, class, head);
-				if (!b) {
-					printk("kmalloc failed %s:%s at %d\n", __FILE__, __FUNCTION__, __LINE__);
-					while (1);
-				}
+			header = read_pci_header_type(&reg);
+			
+			b = store_pci_device_to_list(bus, dev, data, i, class, head);
+			if (!b) {
+				printk("kmalloc failed %s:%s at %d\n", __FILE__, __FUNCTION__, __LINE__);
+				while (1);
 			}
-		} 
+		}
 	} 
 	
 	return 0;
@@ -270,12 +272,11 @@ void show_all_pci_device(void)
 	struct pci_device_list *p;
 
 	for (p = pci_device_head.next; p != &pci_device_head; p = p->next)
-		printk("Found Device: Bus %d : Devfn %d : Vender 0x%x : Device 0x%x : func_num %d : Class 0x%x : dev_type = 0x%x : %s\n", 
-		       p->data.bus, p->data.devfn, p->data.vender, p->data.devid, 
-		       p->data.func, p->data.class, p->data.dev_type,
-		       p->data.multi == 0 ? "not multi device" : "multi device");
-
-
+		printk("Found Device: Bus %d:Devfn %d:Vender 0x%x:Device 0x%x:func %d:header 0x%x:Class 0x%x:Multi %d\n", 
+		       p->data.bus, p->data.devfn, 
+		       p->data.vender, p->data.devid, 
+		       p->data.func, p->data.header_type,
+		       p->data.class, p->data.multi);
 }
 
 /**
@@ -315,7 +316,7 @@ u_int32_t pci_data_read(struct pci_device *pci, u_int8_t reg_num)
 	reg.func_num = pci->func;
 	reg.dev_num = pci->devfn;
 	reg.bus_num = pci->bus;
-	
+
 	return read_pci_data(&reg);
 }
 

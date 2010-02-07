@@ -63,12 +63,15 @@ static bool find_ata_device(void)
 bool init_ata_disk_driver(void)
 {
 	u_int32_t data;
+	int i;
 
 	if (!find_ata_device())
 		return false;
 
-	data = pci_data_read(this_device, 0x10);
-	printk("data is 0x%x\n", data);
+	for (i = 0x10; i <= 0x24; i += 0x04) {
+		data = pci_data_read(this_device, i);
+		printk("data(0x%x) is 0x%x\n", i, data);
+	}
 
 	// register myself.
 	register_blk_driver(&ata_dev);
