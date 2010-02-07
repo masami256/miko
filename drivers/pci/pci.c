@@ -45,6 +45,10 @@ struct pci_device {
 	// 0x0c 
 	u_int8_t header_type;     // header type.
 	u_int8_t multi;           // multi device.
+
+	// 0x2c
+	u_int16_t sub_vender;     // sub system vender id.
+	u_int16_t sub_devid;      // sub system device id.
 };
 
 struct pci_device_list {
@@ -72,11 +76,12 @@ static struct pci_device_list pci_device_head = {
 // private functions
 /////////////////////////////////////////////////
 static inline void finish_access_to_config_data(struct pci_configuration_register *reg);
-static inline void write_pci_config_address(struct pci_configuration_register *reg);
+static inline void write_pci_config_address(const struct pci_configuration_register *reg);
 
 static void write_pci_data(struct pci_configuration_register *reg, u_int32_t data);
 static u_int32_t read_pci_data(struct pci_configuration_register *reg);
 
+static inline u_int32_t read_pci_sub_system(struct pci_configuration_register *reg);
 static inline u_int32_t read_pci_reg00(struct pci_configuration_register *reg);
 static inline u_int32_t read_pci_class(struct pci_configuration_register *reg);
 static inline u_int32_t read_pci_header_type(struct pci_configuration_register *reg);
@@ -84,14 +89,16 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev);
 
 static bool store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, 
 				     u_int32_t data, u_int8_t func, 
-				     u_int32_t class, u_int32_t header);
+				     u_int32_t class, u_int32_t header,
+				     u_int32_t subsystem);
 
 static bool find_pci_bios32(void);
 
 static bool 
 store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, 
 			 u_int32_t data, u_int8_t func, 
-			 u_int32_t class, u_int32_t header)
+			 u_int32_t class, u_int32_t header,
+			 u_int32_t subsystem)
 {
 	struct pci_device_list *p;
 
@@ -106,7 +113,11 @@ store_pci_device_to_list(u_int8_t bus, u_int8_t devfn,
 	p->data.class = class >> 8;
 	p->data.func = func;
 	p->data.header_type = ((header >> 16) & 0xff) & 0x7f;
-	p->data.multi = ((header & 0x800000) >> 23) & 0x01;
+	p->data.multi = (header >> 16) >> 7;
+	p->data.sub_vender = subsystem & 0xffff;
+	p->data.sub_devid = (subsystem >> 16) & 0xffff;
+
+
 	p->next = pci_device_head.next;
 	pci_device_head.next = p;
 
@@ -168,7 +179,7 @@ static void write_pci_data(struct pci_configuration_register *reg, u_int32_t dat
  * Write data to CONFIG_ADDRESS.
  * @param reg it should be set bus, device, function and so forth.
  */
-static inline void write_pci_config_address(struct pci_configuration_register *reg)
+static inline void write_pci_config_address(const struct pci_configuration_register *reg)
 {
 	u_int32_t data = 0;
 
@@ -190,7 +201,7 @@ static inline void write_pci_config_address(struct pci_configuration_register *r
  */
 static inline u_int32_t read_pci_class(struct pci_configuration_register *reg)
 {
-	reg->reg_num = 0x08;
+	reg->reg_num = 0x8;
 
 	return read_pci_data(reg);
 }
@@ -214,7 +225,19 @@ static inline u_int32_t read_pci_reg00(struct pci_configuration_register *reg)
  */
 static inline u_int32_t read_pci_header_type(struct pci_configuration_register *reg)
 {
-	reg->reg_num = 0x0c;
+	reg->reg_num = 0xc;
+
+	return read_pci_data(reg);
+}
+
+/**
+ * Read CONFIG_DATA by register 0x2c to get its sub system data.
+ * @param reg it should be set bus, device, function and so forth.
+ * @return sub system.
+ */
+static inline u_int32_t read_pci_sub_system(struct pci_configuration_register *reg)
+{
+	reg->reg_num = 0x2c;
 
 	return read_pci_data(reg);
 }
@@ -230,6 +253,8 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 	u_int32_t data;
 	u_int32_t class;
 	u_int32_t header;
+	u_int32_t subsystem;
+
 	int i;
 	struct pci_configuration_register reg;
 	bool b;
@@ -244,11 +269,12 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 		reg.func_num = i;		
 		data = read_pci_reg00(&reg);
 		if (data != 0xffffffff) {
-			
+
 			class = read_pci_class(&reg);
 			header = read_pci_header_type(&reg);
-			
-			b = store_pci_device_to_list(bus, dev, data, i, class, header);
+			subsystem = read_pci_sub_system(&reg);
+
+			b = store_pci_device_to_list(bus, dev, data, i, class, header, subsystem);
 			if (!b) {
 				printk("kmalloc failed %s:%s at %d\n", __FILE__, __FUNCTION__, __LINE__);
 				while (1);
@@ -267,8 +293,8 @@ static bool find_pci_bios32(void)
 {
 	unsigned long addr = 0;
 	union pci_bios32 *bios32;
-	int sum, i;
-	int len;
+	char sum;
+	int len, i;
 
 	for (addr = 0xe0000; addr < 0xffff0; addr += 16) {
 		bios32 = (union pci_bios32 *) addr;
@@ -283,7 +309,7 @@ static bool find_pci_bios32(void)
 			if (len) {
 				for (i = 0, sum = 0; i < len; i++)
 					sum += bios32->data[i];
-				
+
 				if (!sum) {
 					printk("found pci bios32 at 0x%x\n", addr);
 					printk("PCI BIOS32 entry point is 0x%x\n", bios32->fields.entry);
@@ -313,7 +339,7 @@ void find_pci_device(void)
 		for (dev = 0; dev < PCI_DEVICE_MAX; dev++)
 			find_pci_data(bus, dev);
 	}
-//	show_all_pci_device();
+	show_all_pci_device();
 	find_pci_bios32();
 }
 
