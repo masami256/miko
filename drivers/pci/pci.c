@@ -234,7 +234,7 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 			class = read_pci_class(&reg);
 			header = read_pci_header_type(&reg);
 			
-			b = store_pci_device_to_list(bus, dev, data, i, class, head);
+			b = store_pci_device_to_list(bus, dev, data, i, class, header);
 			if (!b) {
 				printk("kmalloc failed %s:%s at %d\n", __FILE__, __FUNCTION__, __LINE__);
 				while (1);
