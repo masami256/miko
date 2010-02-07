@@ -52,6 +52,18 @@ struct pci_device_list {
 	struct pci_device_list *next;
 };
 
+union pci_bios32 {
+	struct {
+		u_int8_t sig[4];         // _32_.
+		u_int32_t entry;         // entry point.
+		u_int8_t rev;            // revision.
+		u_int8_t len;            // length.
+		u_int8_t checksum;       // checksum.
+		u_int8_t reserved[5];    // reserved.
+	} fields;
+	char data[16];
+};
+
 static struct pci_device_list pci_device_head = {
 	.next = &pci_device_head,
 };
@@ -59,20 +71,22 @@ static struct pci_device_list pci_device_head = {
 /////////////////////////////////////////////////
 // private functions
 /////////////////////////////////////////////////
-static void finish_access_to_config_data(struct pci_configuration_register *reg);
-static void write_pci_config_address(struct pci_configuration_register *reg);
+static inline void finish_access_to_config_data(struct pci_configuration_register *reg);
+static inline void write_pci_config_address(struct pci_configuration_register *reg);
 
 static void write_pci_data(struct pci_configuration_register *reg, u_int32_t data);
 static u_int32_t read_pci_data(struct pci_configuration_register *reg);
 
-static u_int32_t read_pci_reg00(struct pci_configuration_register *reg);
-static u_int32_t read_pci_class(struct pci_configuration_register *reg);
-static u_int32_t read_pci_header_type(struct pci_configuration_register *reg);
+static inline u_int32_t read_pci_reg00(struct pci_configuration_register *reg);
+static inline u_int32_t read_pci_class(struct pci_configuration_register *reg);
+static inline u_int32_t read_pci_header_type(struct pci_configuration_register *reg);
 static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev);
 
 static bool store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, 
 				     u_int32_t data, u_int8_t func, 
 				     u_int32_t class, u_int32_t header);
+
+static bool find_pci_bios32(void);
 
 static bool 
 store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, 
@@ -103,7 +117,7 @@ store_pci_device_to_list(u_int8_t bus, u_int8_t devfn,
 /**
  * Set ENABLE bit to 0 and write data to CONFIG_ADDRESS.
  */
-static void finish_access_to_config_data(struct pci_configuration_register *reg)
+static inline void finish_access_to_config_data(struct pci_configuration_register *reg)
 {
 	reg->enable_bit = 0;
 	write_pci_config_address(reg);
@@ -154,9 +168,9 @@ static void write_pci_data(struct pci_configuration_register *reg, u_int32_t dat
  * Write data to CONFIG_ADDRESS.
  * @param reg it should be set bus, device, function and so forth.
  */
-static void write_pci_config_address(struct pci_configuration_register *reg)
+static inline void write_pci_config_address(struct pci_configuration_register *reg)
 {
-	u_int32_t data;
+	u_int32_t data = 0;
 
 	data = (reg->enable_bit << 31) |
 		(reg->reserved << 24) | 
@@ -174,7 +188,7 @@ static void write_pci_config_address(struct pci_configuration_register *reg)
  * @param reg it should be set bus, device, function and so forth.
  * @return PCI class.
  */
-static u_int32_t read_pci_class(struct pci_configuration_register *reg)
+static inline u_int32_t read_pci_class(struct pci_configuration_register *reg)
 {
 	reg->reg_num = 0x08;
 
@@ -186,7 +200,7 @@ static u_int32_t read_pci_class(struct pci_configuration_register *reg)
  * @param reg it should be set bus, device, function and so forth.
  * @return vendor id and device id.
  */
-static u_int32_t read_pci_reg00(struct pci_configuration_register *reg)
+static inline u_int32_t read_pci_reg00(struct pci_configuration_register *reg)
 {
 	reg->reg_num = 0;
 
@@ -198,7 +212,7 @@ static u_int32_t read_pci_reg00(struct pci_configuration_register *reg)
  * @param reg it should be set bus, device, function and so forth.
  * @return vendor id and device id.
  */
-static u_int32_t read_pci_header_type(struct pci_configuration_register *reg)
+static inline u_int32_t read_pci_header_type(struct pci_configuration_register *reg)
 {
 	reg->reg_num = 0x0c;
 
@@ -245,7 +259,46 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 	return 0;
 }
 
-      
+/**
+ * Find PCI BIOS.
+ * @ret bool PCI BIOS is found or not.
+ */
+static bool find_pci_bios32(void)
+{
+	unsigned long addr = 0;
+	union pci_bios32 *bios32;
+	int sum, i;
+	int len;
+
+	for (addr = 0xe0000; addr < 0xffff0; addr += 16) {
+		bios32 = (union pci_bios32 *) addr;
+
+		if (bios32 != NULL && 
+		    bios32->fields.sig[0] == '_' &&
+		    bios32->fields.sig[1] == '3' &&
+		    bios32->fields.sig[2] == '2' &&
+		    bios32->fields.sig[3] == '_') {
+
+			len = bios32->fields.len * 16;
+			if (len) {
+				for (i = 0, sum = 0; i < len; i++)
+					sum += bios32->data[i];
+				
+				if (!sum) {
+					printk("found pci bios32 at 0x%x\n", addr);
+					printk("PCI BIOS32 entry point is 0x%x\n", bios32->fields.entry);
+					printk("PCI BIOS32 revision is 0x%x\n", bios32->fields.rev);
+					return true;
+				}
+			}
+		}
+				
+	}
+	printk("pci bios32 not found\n");
+	return false;
+ 
+}
+
 /////////////////////////////////////////////////
 // public functions
 /////////////////////////////////////////////////
@@ -257,11 +310,11 @@ void find_pci_device(void)
 	int bus, dev;
 
 	for (bus = 0; bus < PCI_BUS_MAX; bus++) {
-		for (dev = 0; dev < PCI_DEVICE_MAX; dev++) {
+		for (dev = 0; dev < PCI_DEVICE_MAX; dev++)
 			find_pci_data(bus, dev);
-		}
 	}
-	show_all_pci_device();
+//	show_all_pci_device();
+	find_pci_bios32();
 }
 
 /**
