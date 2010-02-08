@@ -98,7 +98,7 @@ static bool find_pci_bios32(void);
 
 static inline int is_multi_function(u_int32_t data)
 {
-	return (data >> 16) >> 7;
+	return (data & 0x800000) ? 1 : 0;
 }
 
 static bool 
@@ -122,7 +122,7 @@ store_pci_device_to_list(u_int8_t bus, u_int8_t devfn,
 	p->data.base_class = (class >> 24) & 0xff;
 	p->data.func = func;
 	p->data.header_type = ((header >> 16) & 0xff) & 0x7f;
-	p->data.multi = (header >> 16) >> 7;
+	p->data.multi = (header & 0x800000) ? 1 : 0;
 	p->data.sub_vender = subsystem & 0xffff;
 	p->data.sub_devid = (subsystem >> 16) & 0xffff;
 
