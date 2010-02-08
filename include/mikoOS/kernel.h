@@ -1,5 +1,5 @@
-#ifndef __KERNEL_H
-#define __KERNEL_H 1
+#ifndef __MIKOOS_KERNE_H
+#define __MIKOOR_KERNELH 1
 
 // function/variable modifier.
 #define PUBLIC  // none 
@@ -7,4 +7,4 @@
 
 #include <sys/types.h>
 
-#endif // __KERNEL_H
+#endif // __MIKOOR_KERNE_H

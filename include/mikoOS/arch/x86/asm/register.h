@@ -1,5 +1,5 @@
-#ifndef __REGISTER_H
-#define __REGISTER_H 1
+#ifndef __MIKOOS_REGISTER_H
+#define __MIKOOS_REGISTER_H 1
 
 #include <sys/types.h>
 
@@ -12,4 +12,4 @@ struct registers
 
 };
 
-#endif // __REGISTER_H
+#endif // __MIKOOS_REGISTER_H
