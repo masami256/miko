@@ -20,13 +20,13 @@
 
 // This structure represents PCI's CONFIG_ADDRESS register.
 struct pci_configuration_register {
-	u_int8_t enable_bit;      // 31: enable bit.
-	u_int8_t reserved;        // 24-30: reserved.
-	u_int8_t bus_num;         // 16-23: bus number.
-	u_int8_t dev_num;         // 11-15: device number.
-	u_int8_t func_num;        // 8-10: function number.
-	u_int8_t reg_num;         // 2-7: regster number.
-	u_int8_t bit0;            // 0-1: always 0.
+	u_int32_t enable_bit;      // 31: enable bit.
+	u_int32_t reserved;        // 24-30: reserved.
+	u_int32_t bus_num;         // 16-23: bus number.
+	u_int32_t dev_num;         // 11-15: device number.
+	u_int32_t func_num;        // 8-10: function number.
+	u_int32_t reg_num;         // 2-7: regster number.
+	u_int32_t bit0;            // 0-1: always 0.
 };
 
 // Store PCI device information.
@@ -40,7 +40,9 @@ struct pci_device {
 
 	// 0x08
 	u_int8_t revid;           // revision id.
-	u_int32_t class;          // class code.
+	u_int8_t pg_if;           // program interface.
+	u_int32_t sub_class;	  // sub class.
+	u_int32_t base_class;     // base class.
 
 	// 0x0c 
 	u_int8_t header_type;     // header type.
@@ -94,6 +96,11 @@ static bool store_pci_device_to_list(u_int8_t bus, u_int8_t devfn,
 
 static bool find_pci_bios32(void);
 
+static inline int is_multi_function(u_int32_t data)
+{
+	return (data >> 16) >> 7;
+}
+
 static bool 
 store_pci_device_to_list(u_int8_t bus, u_int8_t devfn, 
 			 u_int32_t data, u_int8_t func, 
@@ -110,7 +117,9 @@ store_pci_device_to_list(u_int8_t bus, u_int8_t devfn,
 	p->data.devfn = devfn;
 	p->data.vender = data & 0xffff;
 	p->data.devid = (data >> 16) & 0xffff;
-	p->data.class = class >> 8;
+	p->data.pg_if = (class >> 8) & 0xff;
+	p->data.sub_class = (class >> 16) & 0xff;
+	p->data.base_class = (class >> 24) & 0xff;
 	p->data.func = func;
 	p->data.header_type = ((header >> 16) & 0xff) & 0x7f;
 	p->data.multi = (header >> 16) >> 7;
@@ -188,8 +197,7 @@ static inline void write_pci_config_address(const struct pci_configuration_regis
 		(reg->bus_num << 16) | 
 		(reg->dev_num << 11) | 
 		(reg->func_num << 8) |
-		(reg->reg_num << 2) |
-		reg->bit0;
+		reg->reg_num;
 
 	outl(PCI_CONFIG_ADDRESS, data);	
 }
@@ -293,8 +301,12 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 				printk("kmalloc failed %s:%s at %d\n", __FILE__, __FUNCTION__, __LINE__);
 				while (1);
 			}
+
+			// if it's not a multi function, we need to search other function.
+			if (i == 0 && !is_multi_function(header))
+				return 0;
 		}
-	} 
+	}
 	
 	return 0;
 }
@@ -365,11 +377,12 @@ void show_all_pci_device(void)
 	struct pci_device_list *p;
 
 	for (p = pci_device_head.next; p != &pci_device_head; p = p->next)
-		printk("Found Device: Bus %d:Devfn %d:Vender 0x%x:Device 0x%x:func %d:header 0x%x:Class 0x%x:Multi %d\n", 
+		printk("Found Device: Bus %d:Devfn %d:Vender 0x%x:Device 0x%x:func %d:header 0x%x:Class 0x%x-0x%x:Multi %d\n", 
 		       p->data.bus, p->data.devfn, 
 		       p->data.vender, p->data.devid, 
 		       p->data.func, p->data.header_type,
-		       p->data.class, p->data.multi);
+		       p->data.base_class, p->data.sub_class,
+		       p->data.multi);
 }
 
 /**

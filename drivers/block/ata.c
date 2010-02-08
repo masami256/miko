@@ -68,6 +68,8 @@ bool init_ata_disk_driver(void)
 	if (!find_ata_device())
 		return false;
 
+	pci_data_write(this_device, 0x04, 0x2800005);
+
 	for (i = 0x10; i <= 0x24; i += 0x04) {
 		data = pci_data_read(this_device, i);
 		printk("data(0x%x) is 0x%x\n", i, data);
