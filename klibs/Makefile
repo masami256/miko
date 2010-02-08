@@ -4,7 +4,8 @@ CFLAGS += -I../include  -I.
 
 objs = string.o \
 	printk.o \
-	kmalloc.o
+	kmalloc.o \
+	stdlib.o
 
 all: $(objs)
 

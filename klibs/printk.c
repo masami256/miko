@@ -1,4 +1,6 @@
+#include <mikoOS/kernel.h>
 #include <mikoOS/printk.h>
+#include <mikoOS/stdlib.h>
 
 #define PRINTK_BUF_SIZE (64 + 1)
 
@@ -12,14 +14,11 @@ static int ypos;
 
 static volatile unsigned char *video;
 
-
 /////////////////////////////////////////////////
 // private functions
 /////////////////////////////////////////////////
 static void kputc(int c);
 static void kputs(char *s);
-static void itoa(long n, char *buf);
-static void itox(unsigned long n, char *buf);
 
 /**
  * It's same as putchar(3).
@@ -54,57 +53,6 @@ static void kputs(char *s)
 		kputc(*s++);
 }
 
-/**
- * Convert decimal number to string.
- * @param n is what you want to convert to string.
- * @param buf is store converting result.
- */
-static void itoa(long n, char *buf)
-{
-	int i, len, sign;
-        char tmp[PRINTK_BUF_SIZE] = { 0 };
-        i = len = sign = 0;
-
-        if (n < 0) {
-		sign = 1;
-                n = -n;
-        }
-
-        do {
-                tmp[len++] = n % 10 + '0';
-	}  while ((n /= 10) > 0);
-
-	if (sign)
-                tmp[len++] = '-';
-
-	for (i = 0; i < len; i++)
-                buf[i] = tmp[len - 1 - i];
-        buf[i] = 0x0;
-}
-
-/**
- * Convert decimal number to hex string.
- * @param n is what you want to convert to hex string.
- * @param buf is store converting result.
- */
-static void itox(unsigned long n, char *buf)
-{
-        int i, len;
-        char tmp[PRINTK_BUF_SIZE] = { 0 };
-        i = len = 0;
-        static const char hex[] = {
-                '0', '1', '2', '3', '4', '5',
-                '6', '7', '8', '9', 'a', 'b',
-                'c', 'd', 'e', 'f' };
-
-        do {
-                tmp[len++] = hex[n % 16];
-        }  while ((n /= 16) > 0);
-
-        for (i = 0; i < len; i++)
-                buf[i] = tmp[len - 1 - i];
-        buf[i] = 0x0;
-}
 
 /////////////////////////////////////////////////
 // public functions
