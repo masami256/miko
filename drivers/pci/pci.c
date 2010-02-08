@@ -219,6 +219,18 @@ static inline u_int32_t read_pci_reg00(struct pci_configuration_register *reg)
 }
 
 /**
+ * Read CONFIG_DATA by register 0x04.
+ * @param reg it should be set bus, device, function and so forth.
+ * @return status.
+ */
+static inline u_int32_t read_pci_command_register(struct pci_configuration_register *reg)
+{
+	reg->reg_num = 0x4;
+
+	return read_pci_data(reg);
+}
+
+/**
  * Read CONFIG_DATA by register 0x0c to check if it's PCI brigdge or not.
  * @param reg it should be set bus, device, function and so forth.
  * @return vendor id and device id.
@@ -251,6 +263,7 @@ static inline u_int32_t read_pci_sub_system(struct pci_configuration_register *r
 static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 {
 	u_int32_t data;
+	u_int32_t status;
 	u_int32_t class;
 	u_int32_t header;
 	u_int32_t subsystem;
@@ -273,6 +286,7 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 			class = read_pci_class(&reg);
 			header = read_pci_header_type(&reg);
 			subsystem = read_pci_sub_system(&reg);
+			status = read_pci_command_register(&reg);
 
 			b = store_pci_device_to_list(bus, dev, data, i, class, header, subsystem);
 			if (!b) {
