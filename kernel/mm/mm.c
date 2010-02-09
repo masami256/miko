@@ -100,7 +100,7 @@ u_int32_t get_free_pages(u_int32_t pages)
 	bool found = false;
 
 	enough = 0;
-	for (i = 0; i < PAGE_SIZE; i++) {
+	for (i = 0; i < PTE_SIZE; i++) {
 		if (current_idx == PTE_SIZE)
 			current_idx = 0;
 
