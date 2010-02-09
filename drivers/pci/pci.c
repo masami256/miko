@@ -29,30 +29,6 @@ struct pci_configuration_register {
 	u_int32_t bit0;            // 0-1: always 0.
 };
 
-// Store PCI device information.
-struct pci_device {
-	u_int8_t bus;             // bus number.
-	u_int8_t devfn;           // device number.
-	u_int8_t func;            // function number.
-	// 0x0
-	u_int16_t vender;         // vender id.
-	u_int16_t devid;          // device id.
-
-	// 0x08
-	u_int8_t revid;           // revision id.
-	u_int8_t pg_if;           // program interface.
-	u_int32_t sub_class;	  // sub class.
-	u_int32_t base_class;     // base class.
-
-	// 0x0c 
-	u_int8_t header_type;     // header type.
-	u_int8_t multi;           // multi device.
-
-	// 0x2c
-	u_int16_t sub_vender;     // sub system vender id.
-	u_int16_t sub_devid;      // sub system device id.
-};
-
 struct pci_device_list {
 	struct pci_device data;
 	struct pci_device_list *next;
@@ -112,6 +88,8 @@ store_pci_device_to_list(u_int8_t bus, u_int8_t devfn,
 	p = kmalloc(sizeof(*p));
 	if (!p)
 		return false;
+
+	memset(p, 0, sizeof(*p));
 
 	p->data.bus = bus;
 	p->data.devfn = devfn;
@@ -365,6 +343,7 @@ void find_pci_device(void)
 		for (dev = 0; dev < PCI_DEVICE_MAX; dev++)
 			find_pci_data(bus, dev);
 	}
+
 	show_all_pci_device();
 	find_pci_bios32();
 }
