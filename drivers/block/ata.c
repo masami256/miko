@@ -18,12 +18,14 @@ struct blk_dev_driver_operations ata_dev = {
 	.close = &close_ATA_disk,
 };
 
-struct pci_device *this_device;
+static struct pci_device *this_device;
+static u_int32_t base_address;;
 
 /////////////////////////////////////////////////
 // private functions
 /////////////////////////////////////////////////
 static bool find_ata_device(void);
+static void set_bus_master_bit(void);
 
 static int open_ATA_disk(void)
 {
@@ -57,22 +59,35 @@ static bool find_ata_device(void)
 
 }
 
+/**
+ * Set bus master bit in status register in CONFIG_DATA.
+ */
+static void set_bus_master_bit(void)
+{
+	u_int32_t data;
+
+	data = pci_data_read(this_device, 0x4) | 0x04;
+	pci_data_write(this_device, 0x04, data);
+}
+
 /////////////////////////////////////////////////
 // public functions
 /////////////////////////////////////////////////
 bool init_ata_disk_driver(void)
 {
-	u_int32_t data;
 	int i;
 
 	if (!find_ata_device())
 		return false;
+	
+	set_bus_master_bit();
 
-	pci_data_write(this_device, 0x04, 0x2800005);
-	printk("0x04 is 0x%x\n", pci_data_read(this_device, 0x04));
 	for (i = 0x10; i <= 0x24; i += 0x04) {
-		data = pci_data_read(this_device, i);
-		printk("data(0x%x) is 0x%x\n", i, data);
+		base_address= pci_data_read(this_device, i);
+		if (base_address) {
+			printk("ATA Base Address is 0x%x(0x%x)\n", base_address, i);
+			break;
+		}
 	}
 
 	// register myself.
