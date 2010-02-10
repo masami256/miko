@@ -2,6 +2,7 @@
 #include <mikoOS/printk.h>
 #include <mikoOS/kmalloc.h>
 #include <mikoOS/block_driver.h>
+#include <mikoOS/abort.h>
 
 struct blk_device_drivers blk_drivers_head = {
 	.op = NULL,
@@ -17,11 +18,9 @@ void register_blk_driver(struct blk_dev_driver_operations *op)
 	struct blk_device_drivers *p;
 
 	p = kmalloc(sizeof(*p));
-	if (!p) {
-		printk("kmalloc failed at %d in %s\n", __LINE__, __FUNCTION__);
-		while (1);
-	}
-
+	if (!p)
+		KERN_ABORT("kmalloc failed");
+	
 	p->op = op;
 	p->next = blk_drivers_head.next;
 	blk_drivers_head.next = p;

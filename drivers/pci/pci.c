@@ -4,6 +4,7 @@
 #include <mikoOS/pci.h>
 #include <mikoOS/string.h>
 #include <mikoOS/kmalloc.h>
+#include <mikoOS/abort.h>
 
 // PCI CONFIG_ADDRESS
 #define PCI_CONFIG_ADDRESS 0x0cf8
@@ -275,10 +276,8 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 			status = read_pci_command_register(&reg);
 
 			b = store_pci_device_to_list(bus, dev, data, i, class, header, subsystem);
-			if (!b) {
-				printk("kmalloc failed %s:%s at %d\n", __FILE__, __FUNCTION__, __LINE__);
-				while (1);
-			}
+			if (!b)
+				KERN_ABORT("kmalloc failed");
 
 			// if it's not a multi function, we need to search other function.
 			if (i == 0 && !is_multi_function(header))

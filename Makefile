@@ -30,7 +30,8 @@ objs = $(boot_dir)/head.o \
 	$(klib_dir)/printk.o \
 	$(klib_dir)/string.o \
 	$(klib_dir)/kmalloc.o \
-	$(klib_dir)/stdlib.o	
+	$(klib_dir)/stdlib.o \
+	$(klib_dir)/abort.o 
 
 all: build $(objs)
 	$(LD) $(LDFLAGS) $(objs) -o $(kernel) 
