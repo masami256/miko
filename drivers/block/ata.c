@@ -2,6 +2,7 @@
 #include <mikoOS/printk.h>
 #include <mikoOS/pci.h>
 #include <mikoOS/block_driver.h>
+#include <mikoOS/timer.h>
 
 // driver operations.
 static int open_ATA_disk(void);
@@ -84,6 +85,7 @@ static void get_base_address(void)
 			break;
 		}
 	}
+
 }
 
 /////////////////////////////////////////////////

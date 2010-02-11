@@ -6,6 +6,7 @@
 #include <mikoOS/kmalloc.h>
 #include <mikoOS/block_driver.h>
 #include <mikoOS/ata.h>
+#include <mikoOS/timer.h>
 
 #include "gdt.h"
 #include "interrupt.h"
@@ -48,6 +49,9 @@ void cmain(unsigned long magic, unsigned long addr)
 	printk("Setup initerrupt service routine.\n");
 	setup_inir();
 
+	// Init timer handler.
+	timer_init();
+
 	// Setup paging.
 	setup_paging();
 
@@ -61,7 +65,7 @@ void cmain(unsigned long magic, unsigned long addr)
 	init_ata_disk_driver();
 
 	show_all_registered_driver();
-	
+
 	show_startup_message();
 
 	while (1);

@@ -23,6 +23,7 @@ objs = $(boot_dir)/head.o \
 	$(kern_dir)/interrupt_handler.o \
 	$(kern_dir)/interrupt.o \
 	$(kern_dir)/intr_gate.o \
+	$(kern_dir)/timer.o \
 	$(kern_mm_dir)/mm.o \
 	$(driver_pci_dir)/pci.o \
 	$(driver_blk_dir)/block_driver.o \

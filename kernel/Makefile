@@ -7,6 +7,7 @@ objs = cmain.o \
 	intr_gate.o \
 	interrupt_handler.o \
 	interrupt.o \
+	timer.o \
 	mm/mm.o
 
 all: $(objs)

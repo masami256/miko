@@ -26,7 +26,6 @@ struct handler_function handlers[INTERRUPT_HANDLER_NUM];
 /////////////////////////////////////////////////
 static void remap_irq(void);
 static void set_interrupt_handler(void);
-static void timer_handler(struct registers regs);
 
 static void set_handler(int idx, u_int32_t base,
 			u_int16_t selector, u_int8_t type)
@@ -85,14 +84,6 @@ static void lidt(void)
 
 }
 
-/**
- * Timer handler test function currently.
- */
-static void timer_handler(struct registers regs)
-{
-//	printk("Timer hanlder\n");
-}
-
 /////////////////////////////////////////////////
 // public functions
 /////////////////////////////////////////////////
@@ -112,8 +103,6 @@ void setup_inir(void)
 	for (i = 0; i < INTERRUPT_HANDLER_NUM; i++)
 		set_handler_func(i, NULL);
 
-	set_handler_func(0x20, &timer_handler);
-
 	lidt();
 
 	// we are able to enable interrput.
@@ -121,7 +110,10 @@ void setup_inir(void)
 
 }
 
-
+/**
+ * Interrupt service routine.
+ * @param regs is register.
+ */
 void isr_handler(struct registers regs) 
 {
 	printk("ISR 0x%x\n", regs.int_no);
@@ -131,6 +123,10 @@ void isr_handler(struct registers regs)
 
 }
 
+/**
+ * IRQ interrupt  routine.
+ * @param regs is register.
+ */
 void irq_handler(struct registers regs) 
 {
 	if (regs.int_no >= 40)
@@ -142,6 +138,10 @@ void irq_handler(struct registers regs)
 		handlers[regs.int_no].func(regs);
 }
 
+/**
+ * Set interrupt handler function to function table.
+ * @param f is handler function.
+ */
 inline void set_handler_func(int idx, void (*f)(struct registers regs))
 {
 	handlers[idx].func = f;
