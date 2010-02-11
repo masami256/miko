@@ -3,3 +3,4 @@
 core
 *.log
 kernel.img
+test/img/hda.img
