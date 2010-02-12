@@ -343,8 +343,7 @@ void find_pci_device(void)
 			find_pci_data(bus, dev);
 	}
 
-	show_all_pci_device();
-	find_pci_bios32();
+//	find_pci_bios32();
 }
 
 /**

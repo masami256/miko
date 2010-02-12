@@ -4,6 +4,7 @@
 #include <mikoOS/block_driver.h>
 #include <mikoOS/timer.h>
 #include <asm/io.h>
+#include <mikoOS/string.h>
 
 #define STATUS_REGISTER 0x01f7
 #define ALTERNATE_STATUS_REGISTER 0x03f6
@@ -200,12 +201,23 @@ static void print_error_register(void)
 	}
 }
 
+static bool is_device_fault(void)
+{
+	u_int8_t data;
+
+	data = inb(STATUS_REGISTER);
+	
+	return (data >> 5 & 0x01) == 1 ? true : false;
+}
+
 static bool do_identify_device(void)
 {
 	bool ret = false;
 	u_int8_t data;
 	char value[512];
 	int i, addr;
+	
+	memset(value, 0x0, sizeof(value));
 
 	do_device_secection_protocol();
 	ret = get_DRDY();
@@ -238,16 +250,15 @@ static bool do_identify_device(void)
 			goto read_status_register;
 		}
 
-		for (i = 0, addr = DATA_REGISTER; i < 10; i++, addr++) {
-			printk("read %d sector\n", i);
+		if (is_device_fault()) {
+			printk("some error occured\n");
+			return false;
+		}
+		for (i = 0, addr = DATA_REGISTER; i < 512; i++, addr++) {
 			value[i] = inb(addr);
 		}
 
 	} 
-
-	for (i = 0; i < 10; i++)
-		printk("0x%x ", value[i]);
-	printk("\n");
 
 	return true;
 
@@ -270,7 +281,7 @@ bool init_ata_disk_driver(void)
 
 	if (!do_identify_device()) 
 		printk("identify device failed\n");
-
+	
 	// register myself.
 	register_blk_driver(&ata_dev);
 
