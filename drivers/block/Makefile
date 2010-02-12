@@ -3,7 +3,7 @@ include ../../Makefile.inc
 CFLAGS += -I../../include -I.
 
 objs = block_driver.o \
-	ata.o
+	ata_hdd.o
 
 all: $(objs)
 	

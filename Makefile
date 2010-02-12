@@ -27,7 +27,7 @@ objs = $(boot_dir)/head.o \
 	$(kern_mm_dir)/mm.o \
 	$(driver_pci_dir)/pci.o \
 	$(driver_blk_dir)/block_driver.o \
-	$(driver_blk_dir)/ata.o \
+	$(driver_blk_dir)/ata_hdd.o \
 	$(klib_dir)/printk.o \
 	$(klib_dir)/string.o \
 	$(klib_dir)/kmalloc.o \
