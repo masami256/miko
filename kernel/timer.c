@@ -4,7 +4,7 @@
 
 // counter
 typedef u_int64_t timer_t;
-timer_t counter = 0;
+volatile timer_t counter = 0;
 
 /////////////////////////////////////////////////
 // private functions
