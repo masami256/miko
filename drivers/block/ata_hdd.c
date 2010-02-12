@@ -214,12 +214,11 @@ static bool do_identify_device(void)
 {
 	bool ret = false;
 	u_int8_t data;
-	char value[512];
+	u_int16_t value[32];
 	int i, addr;
 	
 	memset(value, 0x0, sizeof(value));
 
-	do_device_secection_protocol();
 	ret = get_DRDY();
 	if (ret) {
 		set_device_number();
@@ -254,11 +253,16 @@ static bool do_identify_device(void)
 			printk("some error occured\n");
 			return false;
 		}
-		for (i = 0, addr = DATA_REGISTER; i < 512; i++, addr++) {
-			value[i] = inb(addr);
+		for (i = 0, addr = DATA_REGISTER; i < 32; i++, addr += 2) {
+			value[i] = inw(addr);
 		}
 
 	} 
+
+	for (i = 0; i < 32; i++) {
+		printk("%x ", value[i]);
+	}
+	printk("Identify Device Done\n");
 
 	return true;
 
@@ -276,12 +280,10 @@ bool init_ata_disk_driver(void)
 
 	get_base_address();
 
-	if (!do_device_secection_protocol()) 
-		printk("device section protocol is failed\n");
-
+	printk("0x%x:0x%x\n", inb(CYLINDER_HIGH_REGISTER), inb(CYLINDER_LOW_REGISTER));
 	if (!do_identify_device()) 
 		printk("identify device failed\n");
-	
+
 	// register myself.
 	register_blk_driver(&ata_dev);
 
