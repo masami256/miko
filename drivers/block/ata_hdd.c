@@ -37,9 +37,28 @@ static struct pci_device *this_device;
 /////////////////////////////////////////////////
 // private functions
 /////////////////////////////////////////////////
+// for PCI.
 static bool find_ata_device(void);
 static void set_bus_master_bit(void);
 static void get_base_address(void);
+
+// for ATA device.
+static bool wait_until_BSY_and_DRQ_are_zero(u_int16_t port);
+static bool wait_until_BSY_is_zero(u_int16_t port);
+static void set_device_number(int device);
+static bool do_device_secection_protocol(void);
+static inline void set_cylinder_register(u_int8_t high, u_int8_t low);
+static inline void set_sector_count_register(u_int8_t data);
+static u_int8_t get_DRDY(void);
+static inline void write_command(u_int8_t com);
+static inline bool is_error(u_int8_t data);
+static inline bool is_drq_active(u_int8_t data);
+static void print_error_register(void);
+static bool is_device_fault(void);
+static inline void read_one_sector_data(u_int16_t *buf);
+static bool do_identify_device(u_int16_t *buf);
+static bool do_soft_reset(int device);
+static bool initialize_ata(void);
 
 static int open_ATA_disk(void)
 {
@@ -101,6 +120,11 @@ static void get_base_address(void)
 
 }
 
+/**
+ * Wait sometime until BSY and DRQ bits are zero.
+ * @param port which can be STATUS REGISTER or ALTERNATE STATUS REGISTER.
+ * @return true if both bits are zero in few usec.
+ */
 static bool wait_until_BSY_and_DRQ_are_zero(u_int16_t port)
 {
 	u_int8_t data = 0xff;
@@ -117,6 +141,11 @@ static bool wait_until_BSY_and_DRQ_are_zero(u_int16_t port)
 	return (bsy == 0 && drq == 0) ? true : false;
 }
 
+/**
+ * Wait sometime until BSY  bit is zero.
+ * @param port which can be STATUS REGISTER or ALTERNATE STATUS REGISTER.
+ * @return true if BSY bit is zero in few usec.
+ */
 static bool wait_until_BSY_is_zero(u_int16_t port)
 {
 	u_int8_t data = 0xff;
@@ -133,13 +162,21 @@ static bool wait_until_BSY_is_zero(u_int16_t port)
 
 }
 
-static void set_device_number(void)
+/**
+ * Set device number to Device/Head register.
+ * @param device must be 0 or 1.
+ */
+static void set_device_number(int device)
 {
 	u_int8_t data = 0;
 
 	// Device number is zero.
 	data = inb((u_int16_t) DEVICE_HEAD_REGISTER);
-	data &= 0xf7;
+
+	if (!device)
+		data &= 0xf;
+	else
+		data |= 0x10;
 
 	outb((u_int16_t) DEVICE_HEAD_REGISTER, data);
 
@@ -147,30 +184,47 @@ static void set_device_number(void)
 	wait_loop_usec(5);
 }
 
+/**
+ * Device selection protocol.
+ * @return true if success.
+ */
 static bool do_device_secection_protocol(void)
 {
 	bool ret = false;
 
 	ret = wait_until_BSY_and_DRQ_are_zero(ALTERNATE_STATUS_REGISTER);
 	if (ret) {
-		set_device_number();
+		set_device_number(0);
 		ret = wait_until_BSY_and_DRQ_are_zero(ALTERNATE_STATUS_REGISTER);
 	}
 
 	return ret;
 }
 
+/**
+ * Set data to Cylinder High and Low  registers.
+ * @param high data to Cylinder High register.
+ * @param log data to Cylinder Low register.
+ */
 static inline void set_cylinder_register(u_int8_t high, u_int8_t low)
 {
 	outb(CYLINDER_LOW_REGISTER, low);
 	outb(CYLINDER_HIGH_REGISTER, high);
 }
 
+/**
+ * Set data to Sector Count register.
+ * @param data
+ */
 static inline void set_sector_count_register(u_int8_t data)
 {
 	outb(SECTOR_COUNT_REGISTER, data);
 }
 
+/**
+ * Returns DRDY bit which in Status register.
+ * @return 1 or 0.
+ */
 static u_int8_t get_DRDY(void)
 {
 	u_int8_t data = inb(STATUS_REGISTER);
@@ -178,21 +232,36 @@ static u_int8_t get_DRDY(void)
 	return (data >> 6) & 0x01;
 }
 
+/**
+ * Execute ATA command.
+ * @param com is command number.
+ */
 static inline void write_command(u_int8_t com)
 {
 	outb(COMMAND_REGISTER, com);
 }
 
+/**
+ * Check if error bit is active .
+ * @return false means "no error".
+ */
 static inline bool is_error(u_int8_t data)
 {
 	return (data & 0x01) == 0 ? false : true;
 }
 
-static inline bool is_drq_enable(u_int8_t data)
+/**
+ * Check if DRQ bit is active.
+ * @return true is this bit is active.
+ */
+static inline bool is_drq_active(u_int8_t data)
 {
 	return (((data >> 3) & 0x01) == 1) ? true : false;
 }
 
+/**
+ * Printing error register data.
+ */
 static void print_error_register(void)
 {
 	if (do_device_secection_protocol()) {
@@ -201,6 +270,10 @@ static void print_error_register(void)
 	}
 }
 
+/**
+ * Check if Device Fault bit is active.
+ * @return true means some error occured.
+ */
 static bool is_device_fault(void)
 {
 	u_int8_t data;
@@ -210,22 +283,43 @@ static bool is_device_fault(void)
 	return (data >> 5 & 0x01) == 1 ? true : false;
 }
 
-static bool do_identify_device(void)
+/**
+ * Reading one sector.
+ * @param buf is to store data.
+ */
+static inline void read_one_sector_data(u_int16_t *buf)
+{
+	int i, addr;
+
+	for (i = 0, addr = DATA_REGISTER; i < 32; i++, addr += 2)
+		buf[i] = inw(addr);
+
+	for (i = 0; i < 32; i++) {
+		printk("%x ", buf[i]);
+		if (i >= 16 && i % 16 == 0)
+			printk("\n");
+	}
+
+	printk("\n");
+}
+
+/**
+ * Execute Identify Device command.
+ * @param buf is to store data.
+ * @param false is failed Identify Device command.
+ */
+static bool do_identify_device(u_int16_t *buf)
 {
 	bool ret = false;
 	u_int8_t data;
-	u_int16_t value[32];
-	int i, addr;
-	
-	memset(value, 0x0, sizeof(value));
 
+	do_device_secection_protocol();
 	ret = get_DRDY();
 	if (ret) {
-		set_device_number();
 
 		write_command(0xec);
 
-	read_bsy:
+//	read_bsy: // unused.
 		wait_loop_usec(5);
 
 		if (!wait_until_BSY_is_zero(STATUS_REGISTER)) {
@@ -244,7 +338,7 @@ static bool do_identify_device(void)
 			return false;
 		}
 
-		if (!is_drq_enable(data)) {
+		if (!is_drq_active(data)) {
 			printk("drq is 0\n");
 			goto read_status_register;
 		}
@@ -253,19 +347,52 @@ static bool do_identify_device(void)
 			printk("some error occured\n");
 			return false;
 		}
-		for (i = 0, addr = DATA_REGISTER; i < 32; i++, addr += 2) {
-			value[i] = inw(addr);
-		}
 
+		read_one_sector_data(buf);
 	} 
-
-	for (i = 0; i < 32; i++) {
-		printk("%x ", value[i]);
-	}
-	printk("Identify Device Done\n");
 
 	return true;
 
+}
+
+/**
+ * Do sotf reset.
+ * @param device should be 0(master) or 1(slave).
+ * @param false means error occured.
+ */
+static bool do_soft_reset(int device)
+{
+	u_int16_t buf[32];
+
+	memset(buf, 0x0, sizeof(buf));
+
+	// Initialize master/slave.
+	set_device_number(device);
+
+	// Do DEVICE RESET command. 
+	write_command(0x08);
+
+	// Wait sometime after DEVICE RESET.
+	wait_loop_usec(5);
+
+	if (!do_identify_device(buf)) {
+		printk("identify device failed\n");
+		return false;
+	}
+	
+	return true;
+}
+
+/**
+ * Initialize ATA device when use it.
+ */
+static bool initialize_ata(void)
+{
+	bool ret = false;
+
+	ret = do_soft_reset(0);
+
+	return ret;
 }
 
 /////////////////////////////////////////////////
@@ -280,9 +407,7 @@ bool init_ata_disk_driver(void)
 
 	get_base_address();
 
-	printk("0x%x:0x%x\n", inb(CYLINDER_HIGH_REGISTER), inb(CYLINDER_LOW_REGISTER));
-	if (!do_identify_device()) 
-		printk("identify device failed\n");
+	initialize_ata();
 
 	// register myself.
 	register_blk_driver(&ata_dev);
