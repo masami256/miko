@@ -3,10 +3,10 @@ include ../../Makefile.inc
 CFLAGS += -I../../include -I.
 
 objs = block_driver.o \
-	ata_hdd.o
+	ata/ata_hdd.o
 
 all: $(objs)
-	
+	cd ata && make
 .c.o:
 	$(CC) $(CFLAGS) $< -c
 
@@ -15,5 +15,6 @@ all: $(objs)
 
 clean:
 	-rm *.o  *~
+	cd ata && make clean
 
 .PHONY: clean all
