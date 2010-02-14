@@ -2,8 +2,7 @@ include ../../Makefile.inc
 
 CFLAGS += -I../../include -I.
 
-objs = block_driver.o \
-	ata/ata_hdd.o
+objs = block_driver.o
 
 all: $(objs)
 	cd ata && make
