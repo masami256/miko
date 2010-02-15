@@ -6,16 +6,18 @@
 #include <asm/io.h>
 #include <mikoOS/string.h>
 
-#define STATUS_REGISTER 0x01f7
+#define DATA_REGISTER             0x01f0
+#define ERROR_REGISTER            0x01f1
+#define FEATURES_REGISTER         0x01f1
+#define SECTOR_COUNT_REGISTER     0x01f2
+#define SECTOR_NUMBER_REGISTER    0x01f3
+#define CYLINDER_LOW_REGISTER     0x01f4
+#define CYLINDER_HIGH_REGISTER    0x01f5
+#define DEVICE_HEAD_REGISTER      0x01f6
+#define STATUS_REGISTER           0x01f7
+#define COMMAND_REGISTER          0x01f7
 #define ALTERNATE_STATUS_REGISTER 0x03f6
-#define DEVICE_HEAD_REGISTER 0x01f6
-#define FEATURES_REGISTER 0x01f1
-#define SECTOR_COUNT_REGISTER 0x01f2
-#define CYLINDER_LOW_REGISTER 0x01f4
-#define CYLINDER_HIGH_REGISTER 0x01f5
-#define COMMAND_REGISTER 0x01f7
-#define DATA_REGISTER 0x01f0
-#define ERROR_REGISTER 0x01f1
+#define DEVICE_CONTROL_REGISTER   0x03f6
 
 // driver operations.
 static int open_ATA_disk(void);
@@ -46,18 +48,19 @@ static void get_base_address(void);
 static bool wait_until_BSY_and_DRQ_are_zero(u_int16_t port);
 static bool wait_until_BSY_is_zero(u_int16_t port);
 static void set_device_number(int device);
-static bool do_device_secection_protocol(void);
+static bool do_device_selection_protocol(int device);
 static inline void set_cylinder_register(u_int8_t high, u_int8_t low);
+static inline u_int8_t get_cylinder_regster(u_int16_t port);
 static inline void set_sector_count_register(u_int8_t data);
 static u_int8_t get_DRDY(void);
 static inline void write_command(u_int8_t com);
 static inline bool is_error(u_int8_t data);
 static inline bool is_drq_active(u_int8_t data);
-static void print_error_register(void);
+static void print_error_register(int device);
 static bool is_device_fault(void);
-static inline void read_one_sector_data(u_int16_t *buf);
-static bool do_identify_device(u_int16_t *buf);
-static bool do_soft_reset(int device);
+static bool do_identify_device(int device, u_int16_t *buf);
+static void do_soft_reset(int device);
+static bool initialize_common(int device);
 static bool initialize_ata(void);
 
 static int open_ATA_disk(void)
@@ -186,15 +189,16 @@ static void set_device_number(int device)
 
 /**
  * Device selection protocol.
+ * @param device number.
  * @return true if success.
  */
-static bool do_device_secection_protocol(void)
+static bool do_device_selection_protocol(int device)
 {
 	bool ret = false;
 
 	ret = wait_until_BSY_and_DRQ_are_zero(ALTERNATE_STATUS_REGISTER);
 	if (ret) {
-		set_device_number(0);
+		set_device_number(device);
 		ret = wait_until_BSY_and_DRQ_are_zero(ALTERNATE_STATUS_REGISTER);
 	}
 
@@ -210,6 +214,16 @@ static inline void set_cylinder_register(u_int8_t high, u_int8_t low)
 {
 	outb(CYLINDER_LOW_REGISTER, low);
 	outb(CYLINDER_HIGH_REGISTER, high);
+}
+
+/**
+ * Read cylinder register.
+ * @param port is Cylinder high or low.
+ * @return data
+ */
+static inline u_int8_t get_cylinder_regster(u_int16_t port)
+{
+	return inb(port);
 }
 
 /**
@@ -261,10 +275,11 @@ static inline bool is_drq_active(u_int8_t data)
 
 /**
  * Printing error register data.
+ * @param device is device number.
  */
-static void print_error_register(void)
+static void print_error_register(int device)
 {
-	if (do_device_secection_protocol()) {
+	if (do_device_selection_protocol(device)) {
 		u_int8_t err = inb(ERROR_REGISTER);
 		printk("error is 0x%x\n", err);
 	}
@@ -283,13 +298,94 @@ static bool is_device_fault(void)
 	return (data >> 5 & 0x01) == 1 ? true : false;
 }
 
+static bool wait_until_device_ready(int device)
+{
+	int i;
+	bool b = false;
+
+	for (i =0; i < 5; i++) {
+		b = wait_until_BSY_and_DRQ_are_zero(device);
+		if (b)
+			break;
+	}
+
+	return b;
+}
+
 /**
  * Reading one sector.
  * @param buf is to store data.
  */
-static inline void read_one_sector_data(u_int16_t *buf)
+static inline bool read_one_sector(int device, u_int16_t cylinder_num,
+				   u_int8_t head_num, u_int8_t sector_num,
+				   u_int8_t count)
 {
-	int i, addr;
+	int i;
+	bool b = false;
+	u_int8_t dev;
+	u_int8_t status;
+	u_int16_t buf[32];
+	int addr;
+
+	memset(buf, 0x0, sizeof(buf));
+
+	b = wait_until_device_ready(device);
+	if (!b) {
+		printk("Failed read sector\n");
+		return false;
+	}
+
+	set_device_number(device);
+
+	wait_loop_usec(1);
+
+	b = wait_until_device_ready(device);
+	if (!b) {
+		printk("Failed read sector\n");
+		return false;
+	}
+
+	// nIEN bit should be enable and other bits are disable.
+	outb(DEVICE_CONTROL_REGISTER, 0x02);
+
+	// Features register should be 0.
+	outb(FEATURES_REGISTER, 0x00);
+
+	outb(CYLINDER_LOW_REGISTER, cylinder_num & 0xff);
+	outb(CYLINDER_HIGH_REGISTER, (cylinder_num >> 8) & 0xff);
+	
+	outb(SECTOR_NUMBER_REGISTER, sector_num);
+
+	dev = ((head_num >> 4) | 0x10) & 0x1f;
+	printk("high:0x%x low:0x%x header:0x%x sector:0x%x count:0x%x\n",
+	       (cylinder_num >> 8) & 0xff,
+	       cylinder_num & 0xff,
+	       dev,
+	       sector_num,
+	       count);
+
+	outb(DEVICE_HEAD_REGISTER, dev);
+
+	outb(SECTOR_COUNT_REGISTER, count);
+
+	// Read data.
+	outb(COMMAND_REGISTER, 0x20);
+
+	wait_loop_usec(4);
+
+	inb(ALTERNATE_STATUS_REGISTER);
+
+read_status_register_again:
+	status = inb(STATUS_REGISTER);
+
+	if (is_error(status)) {
+		printk("error occured:0x%x\n", status);
+		print_error_register(device);
+		return false;
+	}
+	
+	if (!is_drq_active(status))
+		goto read_status_register_again;
 
 	for (i = 0, addr = DATA_REGISTER; i < 32; i++, addr += 2)
 		buf[i] = inw(addr);
@@ -299,21 +395,28 @@ static inline void read_one_sector_data(u_int16_t *buf)
 		if (i >= 16 && i % 16 == 0)
 			printk("\n");
 	}
-
+	
 	printk("\n");
+
+	inb(ALTERNATE_STATUS_REGISTER);
+	inb(STATUS_REGISTER);
+
+	return true;
 }
 
 /**
  * Execute Identify Device command.
+ * @param device number.
  * @param buf is to store data.
  * @param false is failed Identify Device command.
  */
-static bool do_identify_device(u_int16_t *buf)
+static bool do_identify_device(int device, u_int16_t *buf)
 {
 	bool ret = false;
 	u_int8_t data;
+	int i, addr;
 
-	do_device_secection_protocol();
+	do_device_selection_protocol(device);
 	ret = get_DRDY();
 	if (ret) {
 
@@ -334,21 +437,31 @@ static bool do_identify_device(u_int16_t *buf)
 
 		if (is_error(data)) {
 			printk("error occured:0x%x\n", data);
-			print_error_register();
+			print_error_register(device);
 			return false;
 		}
 
-		if (!is_drq_active(data)) {
-			printk("drq is 0\n");
+		if (!is_drq_active(data))
 			goto read_status_register;
-		}
 
 		if (is_device_fault()) {
 			printk("some error occured\n");
 			return false;
 		}
 
-		read_one_sector_data(buf);
+		for (i = 0, addr = DATA_REGISTER; i < 32; i++, addr += 2)
+			buf[i] = inw(addr);
+
+#if 0
+		for (i = 0; i < 32; i++) {
+			printk("%x ", buf[i]);
+			if (i >= 16 && i % 16 == 0)
+				printk("\n");
+		}
+		
+		printk("\n");
+#endif
+
 	} 
 
 	return true;
@@ -358,14 +471,9 @@ static bool do_identify_device(u_int16_t *buf)
 /**
  * Do sotf reset.
  * @param device should be 0(master) or 1(slave).
- * @param false means error occured.
  */
-static bool do_soft_reset(int device)
+static void do_soft_reset(int device)
 {
-	u_int16_t buf[32];
-
-	memset(buf, 0x0, sizeof(buf));
-
 	// Initialize master/slave.
 	set_device_number(device);
 
@@ -373,13 +481,73 @@ static bool do_soft_reset(int device)
 	write_command(0x08);
 
 	// Wait sometime after DEVICE RESET.
-	wait_loop_usec(5);
+	wait_loop_usec(5);	
+}
 
-	if (!do_identify_device(buf)) {
+// It represents device type.
+enum {
+	DEV_TYPE_UNKNOWN = -1,
+	DEV_TYPE_ATA = 0,
+	DEV_TYPE_ATAPI,
+};
+
+/**
+ * Check this device is ATA or ATAPI.
+ * @param high data from Cylinder high register.
+ * @param low data from Cylinder low register.
+ * @return device type.
+ */
+static int get_device_type(u_int8_t high, u_int8_t low)
+{
+	if (high == 0x0 && low == 0x0)
+		return DEV_TYPE_ATA;
+	else if (high == 0xeb && low == 0x14)
+		return DEV_TYPE_ATAPI;
+	else
+		return DEV_TYPE_UNKNOWN;
+}
+
+/**
+ * Main initialize routine.
+ * @param device is master or slave.
+ * @return true or false.
+ */
+static bool initialize_common(int device)
+{
+	u_int8_t high, low;
+	u_int16_t buf[32];
+	int dev = 0;
+	bool ret = false;
+
+	memset(buf, 0x0, sizeof(buf));
+
+	high = low = 0;
+
+	do_soft_reset(device);
+
+	// Read Cylinder register high and low before use.
+	low = get_cylinder_regster(CYLINDER_LOW_REGISTER);
+	high = get_cylinder_regster(CYLINDER_HIGH_REGISTER);
+
+	// Is this device ATA?
+	dev = get_device_type(high, low);
+	switch (dev) {
+	case DEV_TYPE_ATA: // Only supports ATA device yet.
+		break;
+	case DEV_TYPE_ATAPI:
+		printk("ATAPI device is not supported yet.\n");
+		return false;
+	default:
+		printk("Unknown device\n");
+		return false;
+	}
+
+	ret = do_identify_device(device, buf);
+	if (!ret) {
 		printk("identify device failed\n");
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -390,7 +558,14 @@ static bool initialize_ata(void)
 {
 	bool ret = false;
 
-	ret = do_soft_reset(0);
+	ret = initialize_common(0);
+	if (ret) {
+		ret = initialize_common(1);
+		if (!ret) {
+			printk("Don't setup slave\n");
+			ret = true; // master is ATA so kernel won't stop startup.
+		}
+	}
 
 	return ret;
 }
@@ -411,6 +586,8 @@ bool init_ata_disk_driver(void)
 
 	// register myself.
 	register_blk_driver(&ata_dev);
+
+	read_one_sector(0, 0, 0, 0, 1);
 
 	return true;
 }
