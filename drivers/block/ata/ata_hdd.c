@@ -199,6 +199,7 @@ static bool do_device_selection_protocol(int device)
 	ret = wait_until_BSY_and_DRQ_are_zero(ALTERNATE_STATUS_REGISTER);
 	if (ret) {
 		set_device_number(device);
+		wait_loop_usec(2);
 		ret = wait_until_BSY_and_DRQ_are_zero(ALTERNATE_STATUS_REGISTER);
 	}
 
@@ -304,7 +305,7 @@ static bool wait_until_device_is_ready(int device)
 	bool b = false;
 
 	for (i = 0; i < 5; i++) {
-		b = wait_until_BSY_and_DRQ_are_zero(STATUS_REGISTER);
+		b = do_device_selection_protocol(ALTERNATE_STATUS_REGISTER);
 		if (b)
 			break;
 	}
@@ -335,18 +336,6 @@ static inline bool read_one_sector(int device, u_int16_t cylinder_num,
 		return false;
 	}
 
-	set_device_number(device);
-
-	wait_loop_usec(5);
-
-	printk("3\n");
-	b = wait_until_device_is_ready(device);
-	if (!b) {
-		printk("Failed read sector 2\n");
-		return false;
-	}
-
-	printk("4\n");
 	// nIEN bit should be enable and other bits are disable.
 	outb(DEVICE_CONTROL_REGISTER, 0x02);
 
