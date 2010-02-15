@@ -139,7 +139,7 @@ static bool wait_until_BSY_and_DRQ_are_zero(u_int16_t port)
 		bsy = (data >> 7) & 0x01;
 		drq = (data >> 3) & 0x01;
 		i++;
-	} while (!(!bsy && !drq) || i < 1000);
+	} while (!(!bsy && !drq) && i < 1000);
 
 	return (bsy == 0 && drq == 0) ? true : false;
 }
@@ -159,7 +159,7 @@ static bool wait_until_BSY_is_zero(u_int16_t port)
 		data = inb(port);
 		bsy = (data >> 7) & 0x01;
 		i++;
-	} while (bsy || i < 1000);
+	} while (bsy && i < 1000);
 
 	return (bsy == 0) ? true : false;
 
@@ -298,13 +298,13 @@ static bool is_device_fault(void)
 	return (data >> 5 & 0x01) == 1 ? true : false;
 }
 
-static bool wait_until_device_ready(int device)
+static bool wait_until_device_is_ready(int device)
 {
 	int i;
 	bool b = false;
 
-	for (i =0; i < 5; i++) {
-		b = wait_until_BSY_and_DRQ_are_zero(device);
+	for (i = 0; i < 5; i++) {
+		b = wait_until_BSY_and_DRQ_are_zero(STATUS_REGISTER);
 		if (b)
 			break;
 	}
@@ -322,29 +322,31 @@ static inline bool read_one_sector(int device, u_int16_t cylinder_num,
 {
 	int i;
 	bool b = false;
-	u_int8_t dev;
 	u_int8_t status;
 	u_int16_t buf[32];
 	int addr;
+	int loop = 0;
 
 	memset(buf, 0x0, sizeof(buf));
 
-	b = wait_until_device_ready(device);
+	b = wait_until_device_is_ready(device);
 	if (!b) {
-		printk("Failed read sector\n");
+		printk("Failed read sector 1\n");
 		return false;
 	}
 
 	set_device_number(device);
 
-	wait_loop_usec(1);
+	wait_loop_usec(5);
 
-	b = wait_until_device_ready(device);
+	printk("3\n");
+	b = wait_until_device_is_ready(device);
 	if (!b) {
-		printk("Failed read sector\n");
+		printk("Failed read sector 2\n");
 		return false;
 	}
 
+	printk("4\n");
 	// nIEN bit should be enable and other bits are disable.
 	outb(DEVICE_CONTROL_REGISTER, 0x02);
 
@@ -356,15 +358,15 @@ static inline bool read_one_sector(int device, u_int16_t cylinder_num,
 	
 	outb(SECTOR_NUMBER_REGISTER, sector_num);
 
-	dev = ((head_num >> 4) | 0x10) & 0x1f;
-	printk("high:0x%x low:0x%x header:0x%x sector:0x%x count:0x%x\n",
+	printk("device:0x%x high:0x%x low:0x%x header:0x%x sector:0x%x count:0x%x\n",
+	       device,
 	       (cylinder_num >> 8) & 0xff,
 	       cylinder_num & 0xff,
-	       dev,
+	       ((head_num >> 4) | 0x10) & 0x1f,
 	       sector_num,
 	       count);
 
-	outb(DEVICE_HEAD_REGISTER, dev);
+	outb(DEVICE_HEAD_REGISTER, ((head_num >> 4) | 0x10) & 0x1f);
 
 	outb(SECTOR_COUNT_REGISTER, count);
 
@@ -384,10 +386,16 @@ read_status_register_again:
 		return false;
 	}
 	
-	if (!is_drq_active(status))
+	if (!is_drq_active(status)) {
+		if (loop > 5) {
+			printk("DRQ didn't be active\n");
+			return false;
+		}
+		loop++;
 		goto read_status_register_again;
+	}
 
-	for (i = 0, addr = DATA_REGISTER; i < 32; i++, addr += 2)
+	for (i = 0, addr = DATA_REGISTER; i < 32; i++, addr++)
 		buf[i] = inw(addr);
 
 	for (i = 0; i < 32; i++) {
@@ -401,7 +409,10 @@ read_status_register_again:
 	inb(ALTERNATE_STATUS_REGISTER);
 	inb(STATUS_REGISTER);
 
+	printk("Done.\n");
+
 	return true;
+
 }
 
 /**
@@ -584,10 +595,10 @@ bool init_ata_disk_driver(void)
 
 	initialize_ata();
 
+	read_one_sector(0, 0, 0, 0, 1);
+
 	// register myself.
 	register_blk_driver(&ata_dev);
-
-	read_one_sector(0, 0, 0, 0, 1);
 
 	return true;
 }

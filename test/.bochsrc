@@ -275,7 +275,8 @@ ata3: enabled=0, ioaddr1=0x168, ioaddr2=0x360, irq=9
 #ata0-master: type=disk, mode=flat, path="c.img", cylinders=0 # autodetect
 #ata0-slave: type=cdrom, path=/dev/cdrom, status=inserted
 ata0-slave: type=cdrom, path=/dev/cdrom, status=inserted
-ata0-master: type=disk, mode=flat, path="/home/masami/experiment/miko/test/img/hda.img", cylinders=0 # autodetect
+#ata0-master: type=disk, mode=flat, path="/home/masami/experiment/miko/test/img/hda.img", cylinders=306, heads=4, spt=17 # autodetect
+ata0-master: type=disk, path="/home/masami/experiment/miko/test/img/hda.img", mode=flat, cylinders=20, heads=16, spt=63
 
 #=======================================================================
 # BOOT:
