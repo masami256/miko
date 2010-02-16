@@ -308,19 +308,23 @@ static bool wait_until_device_is_ready(int device)
 		b = do_device_selection_protocol(ALTERNATE_STATUS_REGISTER);
 		if (b)
 			break;
+		wait_loop_usec(5);
 	}
 
 	return b;
 }
 
-#if 0
 /**
  * Reading one sector.
  * @param buf is to store data.
  */
-static inline bool read_one_sector(int device, u_int16_t cylinder_num,
-				   u_int8_t head_num, u_int8_t sector_num,
+#ifdef USE_PIO_CHS_READ_SECTOR
+static inline bool read_one_sector(int device, u_int16_t cylinder,
+				   u_int8_t head, u_int8_t sector,
 				   u_int8_t count)
+#else
+static inline bool read_one_sector(int device, u_int32_t sector, u_int8_t count)
+#endif
 {
 	int i;
 	bool b = false;
@@ -343,102 +347,39 @@ static inline bool read_one_sector(int device, u_int16_t cylinder_num,
 	// Features register should be 0.
 	outb(FEATURES_REGISTER, 0x00);
 
-	outb(CYLINDER_LOW_REGISTER, cylinder_num & 0xff);
-	outb(CYLINDER_HIGH_REGISTER, (cylinder_num >> 8) & 0xff);
-	
-	outb(SECTOR_NUMBER_REGISTER, sector_num);
+#ifdef USE_PIO_CHS_READ_SECTOR
 
-	printk("device:0x%x high:0x%x low:0x%x header:0x%x sector:0x%x count:0x%x\n",
-	       device,
-	       (cylinder_num >> 8) & 0xff,
-	       cylinder_num & 0xff,
-	       head_num & 0xf,
-	       sector_num,
-	       count);
+	outb(CYLINDER_LOW_REGISTER, cylinder & 0xff);
+	outb(CYLINDER_HIGH_REGISTER, (cylinder >> 8) & 0xff);
+	
+	outb(SECTOR_NUMBER_REGISTER, sector);
 
 	outb(DEVICE_HEAD_REGISTER, head_num & 0xf);
 
+	printk("device:0x%x high:0x%x low:0x%x header:0x%x sector:0x%x count:0x%x\n",
+	       device,
+	       (cylinder >> 8) & 0xff,
+	       cylinder & 0xff,
+	       head & 0xf,
+	       sector,
+	       count);
+
+#else // Using PIO LBA READ.
+	outb(SECTOR_NUMBER_REGISTER, sector & 0xff);
+	outb(CYLINDER_LOW_REGISTER, (sector >> 8) & 0xff);
+	outb(CYLINDER_HIGH_REGISTER, (sector >> 16) & 0xff);
+	outb(DEVICE_HEAD_REGISTER, ((sector >> 24) & 0x1f) | 0x40);
 	outb(SECTOR_COUNT_REGISTER, count);
 
-	// Read data.
-	outb(COMMAND_REGISTER, 0x20);
+	printk("device:0x%x secnum:0x%x low:0x%x high:0x%x head:0x%x count:0x%x\n",
+	       device,
+	       sector & 0xff,
+	       (sector >> 8) & 0xff,
+	       (sector >> 16) & 0xff,
+	       (((sector >> 24) & 0x1f) | 0x40),
+	       count);
 
-	wait_loop_usec(4);
-
-	inb(ALTERNATE_STATUS_REGISTER);
-
-read_status_register_again:
-	status = inb(STATUS_REGISTER);
-
-	if (is_error(status)) {
-		printk("error occured:0x%x\n", status);
-		print_error_register(device);
-		return false;
-	}
-	
-	if (!is_drq_active(status)) {
-		if (loop > 5) {
-			printk("DRQ didn't be active\n");
-			return false;
-		}
-		loop++;
-		goto read_status_register_again;
-	}
-
-	for (i = 0, addr = DATA_REGISTER; i < 32; i++, addr++)
-		buf[i] = inw(addr);
-
-	for (i = 0; i < 32; i++) {
-		printk("%x ", buf[i]);
-		if (i >= 16 && i % 16 == 0)
-			printk("\n");
-	}
-	
-	printk("\n");
-
-	inb(ALTERNATE_STATUS_REGISTER);
-	inb(STATUS_REGISTER);
-
-	printk("Done.\n");
-
-	return true;
-
-}
-#else
-/**
- * Reading one sector.
- * @param buf is to store data.
- */
-static inline bool read_one_sector(int device, u_int16_t cylinder_num,
-				   u_int8_t head_num, u_int8_t sector_num,
-				   u_int8_t count)
-{
-	int i;
-	bool b = false;
-	u_int8_t status;
-	u_int16_t buf[32];
-	int addr;
-	int loop = 0;
-
-	memset(buf, 0x0, sizeof(buf));
-
-	b = wait_until_device_is_ready(device);
-	if (!b) {
-		printk("Failed read sector 1\n");
-		return false;
-	}
-
-	// nIEN bit should be enable and other bits are disable.
-	outb(DEVICE_CONTROL_REGISTER, 0x02);
-
-	// Features register should be 0.
-	outb(FEATURES_REGISTER, 0x00);
-
-	outb(SECTOR_NUMBER_REGISTER, 1);
-	outb(CYLINDER_LOW_REGISTER, 0);
-	outb(CYLINDER_HIGH_REGISTER, 0);
-	outb(DEVICE_HEAD_REGISTER, 0x20);
-	outb(SECTOR_COUNT_REGISTER, 1);
+#endif // USE_PIO_CHS_READ_SECTOR
 
 	// Read data.
 	outb(COMMAND_REGISTER, 0x20);
@@ -483,7 +424,6 @@ read_status_register_again:
 
 	return true;
 }		
-#endif
 
 /**
  * Execute Identify Device command.
@@ -667,7 +607,11 @@ bool init_ata_disk_driver(void)
 
 	initialize_ata();
 
+#ifdef USE_PIO_CHS_READ_SECTOR
 	read_one_sector(0, 0, 0, 1, 1);
+#else
+	read_one_sector(0, 222, 1);
+#endif
 
 	// register myself.
 	register_blk_driver(&ata_dev);
