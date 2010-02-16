@@ -319,8 +319,7 @@ static bool wait_until_device_is_ready(int device)
  * @param buf is to store data.
  */
 static bool read_sector(int device, u_int32_t sector, 
-			u_int8_t count, u_int16_t *buf,
-			size_t buf_size)
+			u_int16_t *buf,	size_t buf_size)
 {
 	int i;
 	bool b = false;
@@ -346,15 +345,14 @@ static bool read_sector(int device, u_int32_t sector,
 	outb(CYLINDER_LOW_REGISTER, (sector >> 8) & 0xff);
 	outb(CYLINDER_HIGH_REGISTER, (sector >> 16) & 0xff);
 	outb(DEVICE_HEAD_REGISTER, ((sector >> 24) & 0x1f) | 0x40);
-	outb(SECTOR_COUNT_REGISTER, count);
+	outb(SECTOR_COUNT_REGISTER, 1);
 
-	printk("device:0x%x secnum:0x%x low:0x%x high:0x%x head:0x%x count:0x%x\n",
+	printk("device:0x%x secnum:0x%x low:0x%x high:0x%x head:0x%x\n",
 	       device,
 	       sector & 0xff,
 	       (sector >> 8) & 0xff,
 	       (sector >> 16) & 0xff,
-	       (((sector >> 24) & 0x1f) | 0x40),
-	       count);
+	       (((sector >> 24) & 0x1f) | 0x40));
 
 	// Read data.
 	outb(COMMAND_REGISTER, 0x20);
@@ -585,7 +583,7 @@ bool init_ata_disk_driver(void)
 
 	initialize_ata();
 
-	read_sector(0, 222, 1, &buf, sizeof(buf) / sizeof(buf[0]));
+	read_sector(0, 222, &buf, sizeof(buf) / sizeof(buf[0]));
 
 	// register myself.
 	register_blk_driver(&ata_dev);
