@@ -318,19 +318,13 @@ static bool wait_until_device_is_ready(int device)
  * Reading one sector.
  * @param buf is to store data.
  */
-#ifdef USE_PIO_CHS_READ_SECTOR
-static inline bool read_one_sector(int device, u_int16_t cylinder,
-				   u_int8_t head, u_int8_t sector,
-				   u_int8_t count)
-#else
-static inline bool read_one_sector(int device, u_int32_t sector, u_int8_t count)
-#endif
+static bool read_sector(int device, u_int32_t sector, 
+			u_int8_t count, u_int16_t *buf,
+			size_t buf_size)
 {
 	int i;
 	bool b = false;
 	u_int8_t status;
-	u_int16_t buf[32];
-	int addr;
 	int loop = 0;
 
 	memset(buf, 0x0, sizeof(buf));
@@ -347,24 +341,7 @@ static inline bool read_one_sector(int device, u_int32_t sector, u_int8_t count)
 	// Features register should be 0.
 	outb(FEATURES_REGISTER, 0x00);
 
-#ifdef USE_PIO_CHS_READ_SECTOR
-
-	outb(CYLINDER_LOW_REGISTER, cylinder & 0xff);
-	outb(CYLINDER_HIGH_REGISTER, (cylinder >> 8) & 0xff);
-	
-	outb(SECTOR_NUMBER_REGISTER, sector);
-
-	outb(DEVICE_HEAD_REGISTER, head_num & 0xf);
-
-	printk("device:0x%x high:0x%x low:0x%x header:0x%x sector:0x%x count:0x%x\n",
-	       device,
-	       (cylinder >> 8) & 0xff,
-	       cylinder & 0xff,
-	       head & 0xf,
-	       sector,
-	       count);
-
-#else // Using PIO LBA READ.
+	// Set Logical Sector.
 	outb(SECTOR_NUMBER_REGISTER, sector & 0xff);
 	outb(CYLINDER_LOW_REGISTER, (sector >> 8) & 0xff);
 	outb(CYLINDER_HIGH_REGISTER, (sector >> 16) & 0xff);
@@ -378,8 +355,6 @@ static inline bool read_one_sector(int device, u_int32_t sector, u_int8_t count)
 	       (sector >> 16) & 0xff,
 	       (((sector >> 24) & 0x1f) | 0x40),
 	       count);
-
-#endif // USE_PIO_CHS_READ_SECTOR
 
 	// Read data.
 	outb(COMMAND_REGISTER, 0x20);
@@ -406,8 +381,8 @@ read_status_register_again:
 		goto read_status_register_again;
 	}
 
-	for (i = 0, addr = DATA_REGISTER; i < 32; i++)
-		buf[i] = inw(addr);
+	for (i = 0, DATA_REGISTER; i < buf_size; i++)
+		buf[i] = inw(DATA_REGISTER);
 
 	for (i = 0; i < 32; i++) {
 		printk("%x ", buf[i]);
@@ -435,7 +410,7 @@ static bool do_identify_device(int device, u_int16_t *buf)
 {
 	bool ret = false;
 	u_int8_t data;
-	int i, addr;
+	int i;
 
 	do_device_selection_protocol(device);
 	ret = get_DRDY();
@@ -470,8 +445,8 @@ static bool do_identify_device(int device, u_int16_t *buf)
 			return false;
 		}
 
-		for (i = 0, addr = DATA_REGISTER; i < 32; i++)
-			buf[i] = inw(addr);
+		for (i = 0, DATA_REGISTER; i < 32; i++)
+			buf[i] = inw(DATA_REGISTER);
 
 #if 1
 		for (i = 0; i < 32; i++) {
@@ -536,7 +511,7 @@ static int get_device_type(u_int8_t high, u_int8_t low)
 static bool initialize_common(int device)
 {
 	u_int8_t high, low;
-	u_int16_t buf[32];
+	u_int16_t buf[256];
 	int dev = 0;
 	bool ret = false;
 
@@ -597,6 +572,9 @@ static bool initialize_ata(void)
 bool init_ata_disk_driver(void)
 {
 	int i;
+	u_int16_t buf[256];
+
+	memset(buf, 0x0, sizeof(buf));
 
 	if (!find_ata_device())
 		return false;
@@ -607,11 +585,7 @@ bool init_ata_disk_driver(void)
 
 	initialize_ata();
 
-#ifdef USE_PIO_CHS_READ_SECTOR
-	read_one_sector(0, 0, 0, 1, 1);
-#else
-	read_one_sector(0, 222, 1);
-#endif
+	read_sector(0, 222, 1, &buf, sizeof(buf) / sizeof(buf[0]));
 
 	// register myself.
 	register_blk_driver(&ata_dev);
