@@ -313,6 +313,7 @@ static bool wait_until_device_is_ready(int device)
 	return b;
 }
 
+#if 0
 /**
  * Reading one sector.
  * @param buf is to store data.
@@ -351,11 +352,11 @@ static inline bool read_one_sector(int device, u_int16_t cylinder_num,
 	       device,
 	       (cylinder_num >> 8) & 0xff,
 	       cylinder_num & 0xff,
-	       ((head_num >> 4) | 0x10) & 0x1f,
+	       head_num & 0xf,
 	       sector_num,
 	       count);
 
-	outb(DEVICE_HEAD_REGISTER, ((head_num >> 4) | 0x10) & 0x1f);
+	outb(DEVICE_HEAD_REGISTER, head_num & 0xf);
 
 	outb(SECTOR_COUNT_REGISTER, count);
 
@@ -403,6 +404,86 @@ read_status_register_again:
 	return true;
 
 }
+#else
+/**
+ * Reading one sector.
+ * @param buf is to store data.
+ */
+static inline bool read_one_sector(int device, u_int16_t cylinder_num,
+				   u_int8_t head_num, u_int8_t sector_num,
+				   u_int8_t count)
+{
+	int i;
+	bool b = false;
+	u_int8_t status;
+	u_int16_t buf[32];
+	int addr;
+	int loop = 0;
+
+	memset(buf, 0x0, sizeof(buf));
+
+	b = wait_until_device_is_ready(device);
+	if (!b) {
+		printk("Failed read sector 1\n");
+		return false;
+	}
+
+	// nIEN bit should be enable and other bits are disable.
+	outb(DEVICE_CONTROL_REGISTER, 0x02);
+
+	// Features register should be 0.
+	outb(FEATURES_REGISTER, 0x00);
+
+	outb(SECTOR_NUMBER_REGISTER, 1);
+	outb(CYLINDER_LOW_REGISTER, 0);
+	outb(CYLINDER_HIGH_REGISTER, 0);
+	outb(DEVICE_HEAD_REGISTER, 0x20);
+	outb(SECTOR_COUNT_REGISTER, 1);
+
+	// Read data.
+	outb(COMMAND_REGISTER, 0x20);
+
+	wait_loop_usec(4);
+
+	inb(ALTERNATE_STATUS_REGISTER);
+
+read_status_register_again:
+	status = inb(STATUS_REGISTER);
+
+	if (is_error(status)) {
+		printk("error occured:0x%x\n", status);
+		print_error_register(device);
+		return false;
+	}
+	
+	if (!is_drq_active(status)) {
+		if (loop > 5) {
+			printk("DRQ didn't be active\n");
+			return false;
+		}
+		loop++;
+		goto read_status_register_again;
+	}
+
+	for (i = 0, addr = DATA_REGISTER; i < 32; i++)
+		buf[i] = inw(addr);
+
+	for (i = 0; i < 32; i++) {
+		printk("%x ", buf[i]);
+		if (i >= 16 && i % 16 == 0)
+			printk("\n");
+	}
+	
+	printk("\n");
+
+	inb(ALTERNATE_STATUS_REGISTER);
+	inb(STATUS_REGISTER);
+
+	printk("Done.\n");
+
+	return true;
+}		
+#endif
 
 /**
  * Execute Identify Device command.
@@ -449,10 +530,10 @@ static bool do_identify_device(int device, u_int16_t *buf)
 			return false;
 		}
 
-		for (i = 0, addr = DATA_REGISTER; i < 32; i++, addr += 2)
+		for (i = 0, addr = DATA_REGISTER; i < 32; i++)
 			buf[i] = inw(addr);
 
-#if 0
+#if 1
 		for (i = 0; i < 32; i++) {
 			printk("%x ", buf[i]);
 			if (i >= 16 && i % 16 == 0)
@@ -575,6 +656,8 @@ static bool initialize_ata(void)
 /////////////////////////////////////////////////
 bool init_ata_disk_driver(void)
 {
+	int i;
+
 	if (!find_ata_device())
 		return false;
 	
@@ -584,7 +667,7 @@ bool init_ata_disk_driver(void)
 
 	initialize_ata();
 
-	read_one_sector(0, 0, 0, 0, 1);
+	read_one_sector(0, 0, 0, 1, 1);
 
 	// register myself.
 	register_blk_driver(&ata_dev);
