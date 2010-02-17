@@ -58,6 +58,10 @@ static inline bool is_error(u_int8_t data);
 static inline bool is_drq_active(u_int8_t data);
 static void print_error_register(int device);
 static bool is_device_fault(void);
+static bool read_sector(int device, u_int32_t sector, 
+			u_int16_t *buf,	size_t buf_size);
+static bool write_sector(int device, u_int32_t sector, 
+			u_int16_t *buf,	size_t buf_size);
 static bool do_identify_device(int device, u_int16_t *buf);
 static void do_soft_reset(int device);
 static bool initialize_common(int device);
@@ -318,7 +322,7 @@ static bool wait_until_device_is_ready(int device)
  * Reading one sector.
  * @param buf is to store data.
  */
-static bool read_sector(int device, u_int32_t sector, 
+static bool write_sector(int device, u_int32_t sector, 
 			u_int16_t *buf,	size_t buf_size)
 {
 	int i;
@@ -326,7 +330,80 @@ static bool read_sector(int device, u_int32_t sector,
 	u_int8_t status;
 	int loop = 0;
 
-	memset(buf, 0x0, sizeof(buf));
+	b = wait_until_device_is_ready(device);
+	if (!b) {
+		printk("Failed read sector 1\n");
+		return false;
+	}
+
+	// nIEN bit should be enable and other bits are disable.
+	outb(DEVICE_CONTROL_REGISTER, 0x02);
+
+	// Features register should be 0.
+	outb(FEATURES_REGISTER, 0x00);
+
+	// Set Logical Sector.
+	outb(SECTOR_NUMBER_REGISTER, sector & 0xff);
+	outb(CYLINDER_LOW_REGISTER, (sector >> 8) & 0xff);
+	outb(CYLINDER_HIGH_REGISTER, (sector >> 16) & 0xff);
+	outb(DEVICE_HEAD_REGISTER, ((sector >> 24) & 0x1f) | 0x40);
+	outb(SECTOR_COUNT_REGISTER, 1);
+
+	printk("device:0x%x secnum:0x%x low:0x%x high:0x%x head:0x%x\n",
+	       device,
+	       sector & 0xff,
+	       (sector >> 8) & 0xff,
+	       (sector >> 16) & 0xff,
+	       (((sector >> 24) & 0x1f) | 0x40));
+
+	// Read data.
+	outb(COMMAND_REGISTER, 0x30);
+
+	wait_loop_usec(4);
+
+	inb(ALTERNATE_STATUS_REGISTER);
+
+read_status_register_again:
+	status = inb(STATUS_REGISTER);
+
+	if (is_error(status)) {
+		printk("error occured:0x%x\n", status);
+		print_error_register(device);
+		return false;
+	}
+	
+	if (!is_drq_active(status)) {
+		if (loop > 5) {
+			printk("DRQ didn't be active\n");
+			return false;
+		}
+		loop++;
+		goto read_status_register_again;
+	}
+
+	for (i = 0; i < buf_size; i++) {
+		printk("%x ");
+		outw(DATA_REGISTER, buf[i]);
+	}
+	printk("\n");
+
+	inb(ALTERNATE_STATUS_REGISTER);
+	inb(STATUS_REGISTER);
+
+	return true;
+}		
+
+/**
+ * Reading one sector.
+ * @param buf is to store data.
+ */
+static bool read_sector(int device, u_int32_t sector, 
+			u_int16_t *buf,	size_t buf_size)
+{
+	int i;
+	bool b = false;
+	u_int8_t status;
+	int loop = 0;
 
 	b = wait_until_device_is_ready(device);
 	if (!b) {
@@ -379,9 +456,9 @@ read_status_register_again:
 		goto read_status_register_again;
 	}
 
-	for (i = 0, DATA_REGISTER; i < buf_size; i++)
+	for (i = 0; i < buf_size; i++)
 		buf[i] = inw(DATA_REGISTER);
-
+#if 1
 	for (i = 0; i < 32; i++) {
 		printk("%x ", buf[i]);
 		if (i >= 16 && i % 16 == 0)
@@ -389,11 +466,10 @@ read_status_register_again:
 	}
 	
 	printk("\n");
+#endif
 
 	inb(ALTERNATE_STATUS_REGISTER);
 	inb(STATUS_REGISTER);
-
-	printk("Done.\n");
 
 	return true;
 }		
@@ -443,7 +519,7 @@ static bool do_identify_device(int device, u_int16_t *buf)
 			return false;
 		}
 
-		for (i = 0, DATA_REGISTER; i < 32; i++)
+		for (i = 0; i < 256; i++)
 			buf[i] = inw(DATA_REGISTER);
 
 #if 1
@@ -583,8 +659,17 @@ bool init_ata_disk_driver(void)
 
 	initialize_ata();
 
-	read_sector(0, 222, &buf, sizeof(buf) / sizeof(buf[0]));
+	read_sector(0, 222, buf, sizeof(buf) / sizeof(buf[0]));
 
+	buf[0] = 0x6261;
+	buf[1] = 0x6463;
+	buf[2] = 0xa065;
+	
+	write_sector(0, 222, buf, sizeof(buf) / sizeof(buf[0]));
+
+	memset(buf, 0x0, sizeof(buf));
+
+	read_sector(0, 222, buf, sizeof(buf) / sizeof(buf[0]));
 	// register myself.
 	register_blk_driver(&ata_dev);
 
