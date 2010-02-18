@@ -93,7 +93,6 @@ u_int32_t get_free_pages(u_int32_t pages)
 {
 	// current index for pte.
 	static u_int32_t current_idx = 0;
-	u_int32_t prev;
 	u_int32_t i;
 	u_int32_t enough;
 	u_int32_t ret = 0;
@@ -129,7 +128,6 @@ u_int32_t get_free_pages(u_int32_t pages)
 void setup_paging(void)
 {
 	printk("Setup paging.\n");
-	int i;
 
 	setup_pte();
 
