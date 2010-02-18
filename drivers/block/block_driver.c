@@ -3,6 +3,7 @@
 #include <mikoOS/kmalloc.h>
 #include <mikoOS/block_driver.h>
 #include <mikoOS/abort.h>
+#include <mikoOS/string.h>
 
 struct blk_device_drivers blk_drivers_head = {
 	.op = NULL,
@@ -53,4 +54,19 @@ void show_all_registered_driver(void)
 	for (p = blk_drivers_head.next; p != &blk_drivers_head; p = p->next)
 		printk("registered driver [%s]\n", p->op->name);
 
+}
+
+/**
+ * Search driver via name.
+ * @param name is device driver name.
+ * @return non null / null.
+ */
+struct blk_device_drivers *get_blk_driver(const char *name) 
+{
+	struct blk_device_drivers *p;
+
+	for (p = blk_drivers_head.next; p != &blk_drivers_head; p = p->next)
+		if (!strcmp(p->op->name, name))
+			return p;
+	return NULL;
 }

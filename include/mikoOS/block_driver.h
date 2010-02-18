@@ -19,5 +19,6 @@ struct blk_device_drivers {
 void register_blk_driver(struct blk_dev_driver_operations *op);
 void remove_blk_driver(struct blk_dev_driver_operations *op);
 void show_all_registered_driver(void);
+struct blk_device_drivers *get_blk_driver(const char *name);
 
 #endif // __MIKOOS_BLOCK_DRIVER_H

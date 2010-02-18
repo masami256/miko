@@ -30,6 +30,7 @@ void show_startup_message(void)
 void cmain(unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi = (multiboot_info_t *) addr;
+	struct blk_device_drivers *p;
 
 	// initialize console to display messages.
 	cls();
@@ -65,6 +66,10 @@ void cmain(unsigned long magic, unsigned long addr)
 	init_ata_disk_driver();
 
 	show_all_registered_driver();
+
+	p = get_blk_driver("ATA disk");
+	if (p)
+		p->op->open();
 
 	show_startup_message();
 

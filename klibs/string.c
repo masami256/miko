@@ -12,3 +12,13 @@ void memset(void *addr, int c, size_t size)
 		p[i] = c;
 }
 
+/**
+ * It works as strcmp(3).
+ */
+int strcmp(const char *s1, const char *s2)
+{
+	while (*s1++ == *s2++)
+		; // nothing to do.
+
+	return s1 - s2;
+}

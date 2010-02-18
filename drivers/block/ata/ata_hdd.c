@@ -20,9 +20,16 @@
 #define ALTERNATE_STATUS_REGISTER 0x03f6
 #define DEVICE_CONTROL_REGISTER   0x03f6
 
+#define PIO_SECTOR_WRITE_CMD 0x30
+#define PIO_SECTOR_READ_CMD  0x20
+
 // driver operations.
 static int open_ATA_disk(void);
 static int close_ATA_disk(void);
+static bool read_sector(int device, u_int32_t sector, 
+			u_int16_t *buf,	size_t buf_size);
+static bool write_sector(int device, u_int32_t sector, 
+			u_int16_t *buf,	size_t buf_size);
 
 // For find IDE interface.
 static struct pci_device_info ata_info[] = {
@@ -30,7 +37,7 @@ static struct pci_device_info ata_info[] = {
 };
 
 struct blk_dev_driver_operations ata_dev = {
-	.name = "ATA driver",
+	.name = "ATA disk",
 	.open = &open_ATA_disk,
 	.close = &close_ATA_disk,
 };
@@ -64,21 +71,15 @@ static bool do_identify_device(int device, u_int16_t *buf);
 static void do_soft_reset(int device);
 static bool initialize_common(int device);
 static bool initialize_ata(void);
+static bool sector_rw_common(u_int8_t cmd, int device, u_int32_t sector);
+static inline void finish_sector_rw(void);
 
-/**
- * Open ATA disk.
- * not supported yet.
- */
-static int open_ATA_disk(void)
+static sector_rw_test(void)
 {
 	sector_t buf[256];
 	bool ret;
 
 	memset(buf, 0x0, sizeof(buf));
-
-	ret = initialize_ata();
-	if (!ret)
-		return -1;
 
 	ret = read_sector(0, 222, buf, sizeof(buf) / sizeof(buf[0]));
 
@@ -91,6 +92,22 @@ static int open_ATA_disk(void)
 	memset(buf, 0x0, sizeof(buf));
 
 	read_sector(0, 222, buf, sizeof(buf) / sizeof(buf[0]));
+
+}
+
+/**
+ * Open ATA disk.
+ * not supported yet.
+ */
+static int open_ATA_disk(void)
+{
+	bool ret;
+
+	ret = initialize_ata();
+	if (!ret)
+		return -1;
+
+	sector_rw_test();
 
 	return 0;
 }
@@ -107,6 +124,69 @@ static int close_ATA_disk(void)
 
 	return 0;
 }
+
+/**
+ * Writing one sector.
+ * @param device number.
+ * @param sector number.
+ * @param data to write.
+ * @param data size. it should be 256.
+ */
+bool write_sector(int device, u_int32_t sector, 
+		  sector_t *buf, size_t buf_size)
+{
+	bool ret;
+	size_t i;
+
+	ret = sector_rw_common(PIO_SECTOR_WRITE_CMD, device, sector);
+	if (!ret)
+		return ret;
+
+	for (i = 0; i < buf_size; i++) 
+		outw(DATA_REGISTER, buf[i]);
+
+	finish_sector_rw();
+
+	return true;
+}
+
+/**
+ * Reading one sector.
+ * Writing one sector.
+ * @param device number.
+ * @param sector number.
+ * @param data to store..
+ * @param data size. it should be 256.
+ */
+bool read_sector(int device, u_int32_t sector, 
+		 sector_t *buf, size_t buf_size)
+{
+	bool ret;
+	size_t i;
+
+	ret = sector_rw_common(PIO_SECTOR_READ_CMD, device, sector);
+	if (!ret)
+		return ret;
+
+	for (i = 0; i < buf_size; i++) 
+		buf[i] = inw(DATA_REGISTER);
+
+	finish_sector_rw();
+
+#if 1
+	for (i = 0; i < 32; i++) {
+		printk("%x ", buf[i]);
+		if (i >= 16 && i % 16 == 0)
+			printk("\n");
+	}
+	
+	printk("\n");
+#endif
+
+	return true;
+
+}
+
 
 /**
  * Find ATA device from pci device list.
@@ -347,10 +427,13 @@ static bool wait_until_device_is_ready(int device)
 	return b;
 }
 
-
-#define PIO_SECTOR_WRITE_CMD 0x30
-#define PIO_SECTOR_READ_CMD  0x20
-
+/**
+ * Sector Read/Write common function for PIO data R/W.
+ * @param cmd is read or write command.
+ * @param device number.
+ * @param sector number.
+ * @return true if success.
+ */
 static bool sector_rw_common(u_int8_t cmd, int device, u_int32_t sector)
 {
 	bool b = false;
@@ -609,64 +692,3 @@ bool init_ata_disk_driver(void)
 	return true;
 }
 
-/**
- * Writing one sector.
- * @param device number.
- * @param sector number.
- * @param data to write.
- * @param data size. it should be 256.
- */
-bool write_sector(int device, u_int32_t sector, 
-		  sector_t *buf, size_t buf_size)
-{
-	bool ret;
-	size_t i;
-
-	ret = sector_rw_common(PIO_SECTOR_WRITE_CMD, device, sector);
-	if (!ret)
-		return ret;
-
-	for (i = 0; i < buf_size; i++) 
-		outw(DATA_REGISTER, buf[i]);
-
-	finish_sector_rw();
-
-	return true;
-}
-
-/**
- * Reading one sector.
- * Writing one sector.
- * @param device number.
- * @param sector number.
- * @param data to store..
- * @param data size. it should be 256.
- */
-bool read_sector(int device, u_int32_t sector, 
-		 sector_t *buf, size_t buf_size)
-{
-	bool ret;
-	size_t i;
-
-	ret = sector_rw_common(PIO_SECTOR_READ_CMD, device, sector);
-	if (!ret)
-		return ret;
-
-	for (i = 0; i < buf_size; i++) 
-		buf[i] = inw(DATA_REGISTER);
-
-	finish_sector_rw();
-
-#if 1
-	for (i = 0; i < 32; i++) {
-		printk("%x ", buf[i]);
-		if (i >= 16 && i % 16 == 0)
-			printk("\n");
-	}
-	
-	printk("\n");
-#endif
-
-	return true;
-
-}
