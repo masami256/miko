@@ -647,7 +647,7 @@ static bool initialize_common(int device)
 		return false;
 	}
 
-	max_logical_sector_num = ((u_int32_t) buf[60] << 16) | buf[61];
+	max_logical_sector_num = ((u_int32_t) buf[61] << 16) | buf[60];
 	
 	return true;
 }
