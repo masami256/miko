@@ -27,9 +27,9 @@
 static int open_ATA_disk(void);
 static int close_ATA_disk(void);
 static bool read_sector(int device, u_int32_t sector, 
-			u_int16_t *buf,	size_t buf_size);
+			sector_t *buf,	size_t buf_size);
 static bool write_sector(int device, u_int32_t sector, 
-			u_int16_t *buf,	size_t buf_size);
+			sector_t *buf,	size_t buf_size);
 
 // For find IDE interface.
 static struct pci_device_info ata_info[] = {
@@ -67,7 +67,7 @@ static inline bool is_error(u_int8_t data);
 static inline bool is_drq_active(u_int8_t data);
 static void print_error_register(int device);
 static bool is_device_fault(void);
-static bool do_identify_device(int device, u_int16_t *buf);
+static bool do_identify_device(int device, sector_t *buf);
 static void do_soft_reset(int device);
 static bool initialize_common(int device);
 static bool initialize_ata(void);
@@ -511,7 +511,7 @@ static inline void finish_sector_rw(void)
  * @param buf is to store data.
  * @param false is failed Identify Device command.
  */
-static bool do_identify_device(int device, u_int16_t *buf)
+static bool do_identify_device(int device, sector_t *buf)
 {
 	bool ret = false;
 	u_int8_t data;
@@ -616,7 +616,7 @@ static int get_device_type(u_int8_t high, u_int8_t low)
 static bool initialize_common(int device)
 {
 	u_int8_t high, low;
-	u_int16_t buf[256];
+	sector_t buf[256];
 	int dev = 0;
 	bool ret = false;
 
