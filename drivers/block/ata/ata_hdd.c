@@ -23,6 +23,9 @@
 #define PIO_SECTOR_WRITE_CMD 0x30
 #define PIO_SECTOR_READ_CMD  0x20
 
+// Max logical sector number.
+static u_int32_t max_logical_sector_num = 0;
+
 // driver operations.
 static int open_ATA_disk(void);
 static int close_ATA_disk(void);
@@ -439,6 +442,12 @@ static bool sector_rw_common(u_int8_t cmd, int device, u_int32_t sector)
 	u_int8_t status;
 	int loop = 0;
 
+	// sector number need to be checked.
+	if (sector > max_logical_sector_num) {
+		printk("Invalid Sector number 0x%x\n", sector);
+		return false;
+	}
+
 	b = wait_until_device_is_ready(device);
 	if (!b) {
 		printk("Device wasn't ready.\n");
@@ -552,17 +561,6 @@ static bool do_identify_device(int device, sector_t *buf)
 
 		for (i = 0; i < 256; i++)
 			buf[i] = inw(DATA_REGISTER);
-
-#if 1
-		for (i = 0; i < 32; i++) {
-			printk("%x ", buf[i]);
-			if (i >= 16 && i % 16 == 0)
-				printk("\n");
-		}
-		
-		printk("\n");
-#endif
-
 	} 
 
 	return true;
@@ -649,6 +647,8 @@ static bool initialize_common(int device)
 		return false;
 	}
 
+	max_logical_sector_num = ((u_int32_t) buf[60] << 16) | buf[61];
+	
 	return true;
 }
 
