@@ -4,7 +4,7 @@
 #include "descriptor_common.h"
 
 // Number of GDT table.
-#define GDT_TABLE_NUM 6
+#define GDT_TABLE_NUM 256
 	
 #define SEG_TYPE_CODE 0x9a
 #define SEG_TYPE_DATA 0x92

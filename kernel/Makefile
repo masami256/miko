@@ -8,7 +8,8 @@ objs = cmain.o \
 	interrupt_handler.o \
 	interrupt.o \
 	timer.o \
-	mm/mm.o
+	mm/mm.o \
+	process.o
 
 all: $(objs)
 	cd mm && make

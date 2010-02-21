@@ -10,7 +10,7 @@
 
 #include "gdt.h"
 #include "interrupt.h"
-
+#include "process.h"
 
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
@@ -59,6 +59,9 @@ void cmain(unsigned long magic, unsigned long addr)
 	// setup memory for kmalloc().
 	init_kmalloc_area();
 
+	// setup tss for processes.
+	setup_tss();
+
 	// Init PCI
 	find_pci_device();
 
@@ -66,10 +69,11 @@ void cmain(unsigned long magic, unsigned long addr)
 	init_ata_disk_driver();
 
 	show_all_registered_driver();
-
+#if 0
 	p = get_blk_driver("ATA disk");
 	if (p)
 		p->op->open();
+#endif
 
 	show_startup_message();
 
