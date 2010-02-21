@@ -154,7 +154,6 @@ bool write_sector(int device, u_int32_t sector,
 
 /**
  * Reading one sector.
- * Writing one sector.
  * @param device number.
  * @param sector number.
  * @param data to store..
@@ -174,16 +173,6 @@ bool read_sector(int device, u_int32_t sector,
 		buf[i] = inw(DATA_REGISTER);
 
 	finish_sector_rw();
-
-#if 1
-	for (i = 0; i < 32; i++) {
-		printk("%x ", buf[i]);
-		if (i >= 16 && i % 16 == 0)
-			printk("\n");
-	}
-	
-	printk("\n");
-#endif
 
 	return true;
 
