@@ -1,5 +1,5 @@
 #include <mikoOS/kernel.h>
-#include "descriptor_common.h"
+#include <mikoOS/arch/x86/descriptor_common.h>
 #include "interrupt_handler.h"
 
 struct handler_define  handler_info[HANDLER_INFO_NUM] = {

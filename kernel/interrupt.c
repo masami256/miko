@@ -1,8 +1,8 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/lock.h>
 #include <mikoOS/printk.h>
+#include <mikoOS/interrupt.h>
 #include <asm/io.h>
-#include "interrupt.h"
 #include "interrupt_handler.h"
 
 

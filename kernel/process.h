@@ -2,6 +2,8 @@
 #define __MIKOOS_PROCESS_H 1
 #include <sys/types.h>
 
+#define PROCESS_STACK_SIZE 4096
+
 // This structure is for Intel TSS feature.
 struct tss_struct {
 	u_int16_t backlink;

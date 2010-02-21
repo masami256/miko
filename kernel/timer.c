@@ -1,6 +1,6 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/timer.h>
-#include "interrupt.h"
+#include <mikoOS/interrupt.h>
 
 // counter
 typedef u_int64_t timer_t;

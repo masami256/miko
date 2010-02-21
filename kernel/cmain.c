@@ -1,15 +1,17 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/multiboot.h>
 #include <mikoOS/printk.h>
+#include <mikoOS/interrupt.h>
 #include <mikoOS/pci.h>
 #include <mikoOS/mm.h>
 #include <mikoOS/kmalloc.h>
 #include <mikoOS/block_driver.h>
 #include <mikoOS/ata.h>
 #include <mikoOS/timer.h>
+#include <mikoOS/abort.h>
 
 #include "gdt.h"
-#include "interrupt.h"
+
 #include "process.h"
 
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
@@ -49,6 +51,9 @@ void cmain(unsigned long magic, unsigned long addr)
 	// Setup initerrupt service routine.
 	printk("Setup initerrupt service routine.\n");
 	setup_inir();
+
+	// setup fault handler.
+	setup_fault_handler();
 
 	// Init timer handler.
 	timer_init();

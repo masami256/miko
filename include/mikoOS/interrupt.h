@@ -2,7 +2,7 @@
 #define __INTERRUPT_H
 
 #include <asm/register.h>
-#include "descriptor_common.h"
+#include <mikoOS/arch/x86/descriptor_common.h>
 
 extern void setup_inir(void);
 extern void isr_handler(struct registers regs);
