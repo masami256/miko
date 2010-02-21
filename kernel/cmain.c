@@ -9,6 +9,7 @@
 #include <mikoOS/ata.h>
 #include <mikoOS/timer.h>
 #include <mikoOS/abort.h>
+#include <mikoOS/lock.h>
 
 #include "gdt.h"
 
@@ -52,6 +53,8 @@ void cmain(unsigned long magic, unsigned long addr)
 	printk("Setup initerrupt service routine.\n");
 	setup_inir();
 
+	cli();
+
 	// setup fault handler.
 	setup_fault_handler();
 
@@ -67,6 +70,7 @@ void cmain(unsigned long magic, unsigned long addr)
 	// setup tss for processes.
 	setup_tss();
 
+
 	// Init PCI
 	find_pci_device();
 
@@ -79,6 +83,8 @@ void cmain(unsigned long magic, unsigned long addr)
 	if (p)
 		p->op->open();
 #endif
+
+	sti();
 
 	show_startup_message();
 

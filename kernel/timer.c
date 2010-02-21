@@ -1,6 +1,7 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/timer.h>
 #include <mikoOS/interrupt.h>
+#include "process.h"
 
 // counter
 typedef u_int64_t timer_t;
@@ -20,6 +21,8 @@ static void timer_handler(struct registers regs)
 		counter++;
 	else
 		counter = 0;
+
+	scheduler();
 
 }
 

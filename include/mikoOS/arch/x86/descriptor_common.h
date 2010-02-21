@@ -14,6 +14,17 @@
 #define GATE_TYPE_TRAP_GATE 0x8f
 #define GATE_TYPE_TASK_GATE 0x85
 
+// segment type.
+#define SEG_TYPE_CODE 0x9a
+#define SEG_TYPE_DATA 0x92
+#define SEG_TYPE_STACK 0x96
+#define SEG_TYPE_LDT 0x82
+#define SEG_TYPE_TSS 0x89
+#define SEG_TYPE_TSS_BUSY 0x8b
+#define SEG_TYPE_USER_CODE 0xf2
+#define SEG_TYPE_USER_DATA 0xfa
+
+
 /**
  * this structure represent of segment descriptor
  */

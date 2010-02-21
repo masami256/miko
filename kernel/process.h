@@ -46,4 +46,6 @@ struct tss_struct {
 	u_int16_t iopb;
 };
 
+void scheduler(void);
+
 #endif // __MIKOOS_PROCESS_H

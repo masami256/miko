@@ -17,12 +17,12 @@ static void lgdt(void);
  */
 static void setup_gdt_descriptor(void)
 {
-	set_gdt_values(0, 0, 0, 0);
-	set_gdt_values(1, 0, 0xffffffff, SEG_TYPE_CODE);
-	set_gdt_values(2, 0, 0xffffffff, SEG_TYPE_DATA);
-	set_gdt_values(3, 0, 0, SEG_TYPE_STACK);
-	set_gdt_values(4, 0, 0xffffffff, SEG_TYPE_USER_CODE);
-	set_gdt_values(5, 0, 0xffffffff, SEG_TYPE_USER_DATA);
+	set_gdt_values(0, 0, 0, 0, 0);
+	set_gdt_values(1, 0, 0xffffffff, SEG_TYPE_CODE, 0xc0);
+	set_gdt_values(2, 0, 0xffffffff, SEG_TYPE_DATA, 0xc0);
+	set_gdt_values(3, 0, 0, SEG_TYPE_STACK, 0xc0);
+	set_gdt_values(4, 0, 0xffffffff, SEG_TYPE_USER_CODE, 0xc0);
+	set_gdt_values(5, 0, 0xffffffff, SEG_TYPE_USER_DATA, 0xc0);
 }
 
 /**
@@ -74,7 +74,8 @@ void setup_gdt(void)
  * @param type what type is this descriptor.
  */
 void set_gdt_values(u_int32_t index, u_int32_t base, 
-		    u_int32_t limit, u_int8_t type)
+		    u_int32_t limit, u_int8_t type,
+		    u_int8_t access)
 {
 	struct segment_descriptor *p = &gdt[index];
 
@@ -86,7 +87,7 @@ void set_gdt_values(u_int32_t index, u_int32_t base,
 	p->base3 = (base >> 24) & 0xff;
 
 	p->attr1 = type;
-	p->attr2 = 0xc0;
+	p->attr2 = access;
 
 	gdt_count++;
 }
@@ -98,18 +99,26 @@ void set_gdt_values(u_int32_t index, u_int32_t base,
 int search_unused_gdt_index(void)
 {
 	int i, idx;
-	struct segment_descriptor *p;
 	for (i = 0, idx = gdt_count; i < GDT_TABLE_NUM; i++, idx++) {
 		if (i >= GDT_TABLE_NUM) 
 			idx = 1;
 
-		p = &gdt[idx];
-
-		if (p == NULL)
+		if (gdt[idx].attr1 == 0)
 			return idx;
 
 	}
 
-	return -1;
+	return 0;
 
 }
+
+void gdt_types(void)
+{
+	int i;
+	for (i = 1; i < 10; i++) {
+		printk("gdt[%d:0x%x]'s type is 0x%x\n", i, i * 8, gdt[i].attr1);
+
+	}
+}
+
+	
