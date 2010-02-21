@@ -131,7 +131,7 @@ void scheduler(void)
 
 	if (count == 4)
 		count = 0;
-	next = tasks[count];
+	next = tasks[count] * 8;
 
 	printk("next is 0x%x\n", next);
 	switch_task(next);
