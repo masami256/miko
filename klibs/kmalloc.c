@@ -22,7 +22,7 @@ static struct kmalloc_header *next_free_area;
 #define KMALLOC_USED 0x01
 
 // 8KB is reserved for kmalloc.x
-#define KMALLOC_MEMORY_SIZE (PAGE_SIZE * 2)
+#define KMALLOC_MEMORY_SIZE (PAGE_SIZE * 8)
 
 /**
  * Init buffer for kmalloc.
