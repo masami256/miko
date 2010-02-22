@@ -34,7 +34,7 @@ void cmain(unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi = (multiboot_info_t *) addr;
 	struct blk_device_drivers *p;
-
+	
 	// initialize console to display messages.
 	cls();
 
@@ -67,10 +67,6 @@ void cmain(unsigned long magic, unsigned long addr)
 	// setup memory for kmalloc().
 	init_kmalloc_area();
 
-	// setup tss for processes.
-	setup_tss();
-
-
 	// Init PCI
 	find_pci_device();
 
@@ -83,6 +79,9 @@ void cmain(unsigned long magic, unsigned long addr)
 	if (p)
 		p->op->open();
 #endif
+
+	// setup tss for processes.
+	setup_tss();
 
 	sti();
 

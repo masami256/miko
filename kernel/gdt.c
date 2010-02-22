@@ -79,16 +79,27 @@ void set_gdt_values(u_int32_t index, u_int32_t base,
 {
 	struct segment_descriptor *p = &gdt[index];
 
-	p->limit0 = (limit >> 16) & 0xffff;
+	if ((limit > 65536) && (limit & 0xfff) != 0xfff) {
+		printk("You can't do that!");
+	}
 
-	p->base0 = base & 0xff;
-	p->base1 = (base >> 8) & 0xff;
-	p->base2 = (base >> 16) & 0xff;
-	p->base3 = (base >> 24) & 0xff;
+	if (limit > 65536)
+		// Adjust granularity if required
+		limit = limit >> 12;
+	// limit.
+	p->byte[0] = limit & 0xff;
+	p->byte[1] = (limit >> 8) & 0xff;
 
-	p->attr1 = type;
-	p->attr2 = access;
 
+	// segment base.
+	p->byte[2] = base & 0xff;
+	p->byte[3] = (base >> 8) & 0xff;
+	p->byte[4] = (base >> 16) & 0xff;
+	p->byte[7] = (base >> 24) & 0xff;
+
+	// attribute.
+	p->byte[5] = type;
+	p->byte[6] = access | (limit >> 16) & 0xf;
 	gdt_count++;
 }
 
@@ -103,7 +114,7 @@ int search_unused_gdt_index(void)
 		if (i >= GDT_TABLE_NUM) 
 			idx = 1;
 
-		if (gdt[idx].attr1 == 0)
+		if (gdt[idx].byte[7] == 0)
 			return idx;
 
 	}
@@ -116,7 +127,7 @@ void gdt_types(void)
 {
 	int i;
 	for (i = 1; i < 10; i++) {
-		printk("gdt[%d:0x%x]'s type is 0x%x\n", i, i * 8, gdt[i].attr1);
+		printk("gdt[%d:0x%x]'s type:0x%x attr:0x%x\n", i, i * 8, gdt[i].byte[5], gdt[i].byte[6]);
 
 	}
 }

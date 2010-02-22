@@ -23,7 +23,6 @@ static void timer_handler(struct registers regs)
 		counter = 0;
 
 	scheduler();
-
 }
 
 /////////////////////////////////////////////////
