@@ -29,7 +29,12 @@
  * this structure represent of segment descriptor
  */
 struct segment_descriptor {
-	u_int8_t byte[8];
+	u_int16_t limit_l;
+	u_int16_t base_l;
+	u_int8_t base_m;
+	u_int8_t type;
+	u_int8_t limit_h;
+	u_int8_t base_h;
 } __attribute__ ((packed));
 
 /**

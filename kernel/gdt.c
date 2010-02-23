@@ -17,12 +17,12 @@ static void lgdt(void);
  */
 static void setup_gdt_descriptor(void)
 {
-	set_gdt_values(0, 0, 0, 0, 0);
-	set_gdt_values(1, 0, 0xffffffff, SEG_TYPE_CODE, 0xc0);
-	set_gdt_values(2, 0, 0xffffffff, SEG_TYPE_DATA, 0xc0);
-	set_gdt_values(3, 0, 0, SEG_TYPE_STACK, 0xc0);
-	set_gdt_values(4, 0, 0xffffffff, SEG_TYPE_USER_CODE, 0xc0);
-	set_gdt_values(5, 0, 0xffffffff, SEG_TYPE_USER_DATA, 0xc0);
+	set_gdt_values(0, 0, 0, 0);
+	set_gdt_values(1, 0, 0xffffffff, SEG_TYPE_CODE);
+	set_gdt_values(2, 0, 0xffffffff, SEG_TYPE_DATA);
+	set_gdt_values(3, 0, 0, SEG_TYPE_STACK);
+	set_gdt_values(4, 0, 0xffffffff, SEG_TYPE_USER_CODE);
+	set_gdt_values(5, 0, 0xffffffff, SEG_TYPE_USER_DATA);
 }
 
 /**
@@ -74,32 +74,26 @@ void setup_gdt(void)
  * @param type what type is this descriptor.
  */
 void set_gdt_values(u_int32_t index, u_int32_t base, 
-		    u_int32_t limit, u_int8_t type,
-		    u_int8_t access)
+		    u_int32_t limit, u_int8_t type)
 {
 	struct segment_descriptor *p = &gdt[index];
 
-	if ((limit > 65536) && (limit & 0xfff) != 0xfff) {
-		printk("You can't do that!");
-	}
-
+	// Change Sz and Gr bit by limit size.
 	if (limit > 65536)
-		// Adjust granularity if required
-		limit = limit >> 12;
-	// limit.
-	p->byte[0] = limit & 0xff;
-	p->byte[1] = (limit >> 8) & 0xff;
+		p->limit_h = 0xc0;
+	else
+		p->limit_h = 0x40;
 
+	p->limit_l = limit & 0xffff;
 
-	// segment base.
-	p->byte[2] = base & 0xff;
-	p->byte[3] = (base >> 8) & 0xff;
-	p->byte[4] = (base >> 16) & 0xff;
-	p->byte[7] = (base >> 24) & 0xff;
+	p->base_l = base & 0xffff;
+	p->base_m = (base >> 16) & 0xff;
+	p->base_h = (base >> 24) & 0xff;
 
-	// attribute.
-	p->byte[5] = type;
-	p->byte[6] = access | (limit >> 16) & 0xf;
+	p->type = type;
+
+	p->limit_h |= (limit >> 16) & 0xf;
+
 	gdt_count++;
 }
 
@@ -114,7 +108,7 @@ int search_unused_gdt_index(void)
 		if (i >= GDT_TABLE_NUM) 
 			idx = 1;
 
-		if (gdt[idx].byte[7] == 0)
+		if (gdt[idx].type == 0)
 			return idx;
 
 	}
@@ -127,7 +121,7 @@ void gdt_types(void)
 {
 	int i;
 	for (i = 1; i < 10; i++) {
-		printk("gdt[%d:0x%x]'s type:0x%x attr:0x%x\n", i, i * 8, gdt[i].byte[5], gdt[i].byte[6]);
+		printk("gdt[%d:0x%x]'s type:0x%x\n", i, i * 8, gdt[i].type);
 
 	}
 }
