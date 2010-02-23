@@ -17,12 +17,7 @@ static void timer_handler(struct registers regs);
  */
 static void timer_handler(struct registers regs)
 {
-	if (counter != 0xffffffff) 
-		counter++;
-	else
-		counter = 0;
-
-	scheduler();
+	counter++;
 }
 
 /////////////////////////////////////////////////

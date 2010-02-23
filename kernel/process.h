@@ -42,8 +42,7 @@ struct tss_struct {
 	u_int16_t gs_dummy;
 	u_int16_t ldtr;
 	u_int16_t ldtr_dummy;
-	u_int16_t iopb_dummy;
-	u_int16_t iopb;
+	u_int32_t io_bitmap;
 } __attribute__((packed));
 
 void scheduler(void);
