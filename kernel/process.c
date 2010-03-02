@@ -14,11 +14,13 @@
 /////////////////////////////////////////////////
 static void switch_task(u_int16_t sel) __attribute__ ((noinline));
 
-struct tss_struct tss[3];
-u_int16_t tasks[3];
+struct tss_struct tss[2];
+
 static void test_task1(void)
 {
 	u_int32_t i;
+	u_int32_t eflags;
+	
 	for (i = 0; ; i++) {
 		wait_loop_usec(500);
 		if (!(i % 100)) {
@@ -32,30 +34,17 @@ static void test_task1(void)
 static void test_task2(void)
 {
 	u_int32_t i;
+	u_int32_t eflags;
 
 	for (i = 0; ; i++) {
 		wait_loop_usec(500);
 		if (!(i % 100)) {
 		    printk("BBBBB");
 		    switch_task(0x28);
-		    __asm__ volatile ("iret");
 		}
 	}
 
 }
-
-static void test_task3(void)
-{
-	u_int32_t i;
-	for (i = 0; ; i++) {
-		wait_loop_usec(500);
-		if (!(i % 100))
-		    printk("CCCCC");
-	}
-	printk("\n");
-}
-
-
  
 struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
 			   u_int32_t eip, u_int32_t eflags,
@@ -88,6 +77,7 @@ struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
 	p->ss0 = ss0;
 
 	p->io_bitmap = 0x80000000;
+
 	cnt++;
 	return p;
 }
@@ -95,11 +85,17 @@ struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
 
 static void switch_task(u_int16_t sel)
 {
-//	__asm__ ("ljmp %0\n\t" ::"m"(sel));
+	struct far_pointer {
+		u_int32_t a;
+		u_int16_t b;
+	} tmp __attribute__((packed));
 
-	__asm__ ("ljmp $0x30, $0\n\t");
+	tmp.a = 0;
+	tmp.b = sel;
 
+	__asm__ __volatile__ ("ljmp %0\n\t" ::"m"(tmp)); 
 }
+
 
 /////////////////////////////////////////////////
 // public functions
@@ -128,45 +124,22 @@ int setup_tss(void)
 			 esp - PROCESS_STACK_SIZE, ss,
 			 esp, ss);
  
-	set_tss(cs, ds, (u_int32_t) test_task2, 0x202,
+	set_tss(cs, ds, (u_int32_t) &test_task2, 0x202,
 			 esp - (PROCESS_STACK_SIZE * 2), ss,
-			 esp, ss);
- 
-	set_tss(cs, ds, (u_int32_t) test_task3, 0x202,
-			 esp + (PROCESS_STACK_SIZE * 3), ss,
 			 esp, ss);
  
 
 	set_gdt_values(SEL_TSS, (u_int32_t) &tss[0], sizeof(struct tss_struct), SEG_TYPE_TSS); 
 	set_gdt_values(0x30, (u_int32_t) &tss[1], sizeof(struct tss_struct), SEG_TYPE_TSS); 
-// gdt_types();
 
 	ltr();
-
-	test_task1();
 
 	return 0;
 }
 
 void schedule(void)
 {
-#if 0
-	static int count = 1;
-
-	if (!count) {
-		ltr((u_int16_t) (tasks[0] * 8));
-		test_task1();
-		printk("test_task1\n");
-	} else if (count == 1){
-		ltr((u_int16_t) (tasks[1] * 8));
-		test_task2();
-	} else {
-		u_int16_t next = tasks[count % 3] * 8;
-		printk("count = 0x%x\n", count);
-		switch_task(next);
-	}
-	count++;
-#endif
+	test_task1();
 }
 
 
