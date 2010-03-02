@@ -28,7 +28,6 @@ static void test_task1(void)
 		    switch_task(0x30);
 		}
 	}
-	printk("\n");
 }
 
 static void test_task2(void)
@@ -43,7 +42,6 @@ static void test_task2(void)
 		    switch_task(0x28);
 		}
 	}
-
 }
  
 struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
