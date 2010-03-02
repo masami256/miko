@@ -62,18 +62,18 @@ void cmain(unsigned long magic, unsigned long addr)
 	timer_init();
 
 	// Setup paging.
-	setup_paging();
+//	setup_paging();
 
 	// setup memory for kmalloc().
-	init_kmalloc_area();
+//	init_kmalloc_area();
 
 	// Init PCI
-	find_pci_device();
+//	find_pci_device();
 
 	// Init ATA device.
-	init_ata_disk_driver();
+//	init_ata_disk_driver();
 
-	show_all_registered_driver();
+//	show_all_registered_driver();
 #if 0
 	p = get_blk_driver("ATA disk");
 	if (p)

@@ -36,7 +36,6 @@ static void set_handler(int idx, u_int32_t base,
 	p->offsetH = (base >> 16) & 0xffff;
 	p->selector = selector;
 	p->type = type;
-
 	p->count = 0; // unused.
 }
 

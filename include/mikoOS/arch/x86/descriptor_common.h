@@ -4,9 +4,12 @@
 #include <mikoOS/kernel.h>
 
 // selectors.
-#define KERN_CS 0x08
-#define KERN_DS 0x10
-#define KERN_SS 0x18
+#define SEL_KERN_CS 0x08
+#define SEL_KERN_DS 0x10
+#define SEL_KERN_SS 0x18
+#define SEL_USER_CODE 0x18
+#define SEL_USER_DATA 0x20
+#define SEL_TSS 0x28
 
 // gate types.
 #define GATE_TYPE_CALL_GATE 0x84

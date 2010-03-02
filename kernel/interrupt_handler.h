@@ -3,7 +3,7 @@
 
 #include <mikoOS/kernel.h>
 
-#define HANDLER_INFO_NUM 48
+#define HANDLER_INFO_NUM 49
 
 struct handler_define {
 	u_int32_t base;
@@ -13,7 +13,11 @@ struct handler_define {
 
 extern struct handler_define handler_info[HANDLER_INFO_NUM];
 
+// Interrupt handler for 0x80.
+extern void soft_intr_handler(void);
+
 // defined in intr_gate.S
+// fourty eight functions.
 extern void isr_gate0(void);
 extern void isr_gate1(void);
 extern void isr_gate2(void);

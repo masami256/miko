@@ -4,7 +4,8 @@
 
 static struct descriptor_table gdtr;
 static struct segment_descriptor gdt[GDT_TABLE_NUM];
-static u_int32_t gdt_count = 0;
+
+static u_int32_t gdt_count;
 
 /////////////////////////////////////////////////
 // private functions
@@ -18,12 +19,12 @@ static void lgdt(void);
 static void setup_gdt_descriptor(void)
 {
 	set_gdt_values(0, 0, 0, 0);
-	set_gdt_values(1, 0, 0xffffffff, SEG_TYPE_CODE);
-	set_gdt_values(2, 0, 0xffffffff, SEG_TYPE_DATA);
-	set_gdt_values(3, 0, 0, SEG_TYPE_STACK);
-	set_gdt_values(4, 0, 0xffffffff, SEG_TYPE_USER_CODE);
-	set_gdt_values(5, 0, 0xffffffff, SEG_TYPE_USER_DATA);
+	set_gdt_values(SEL_KERN_CS, 0, 0xffffffff, SEG_TYPE_CODE);
+	set_gdt_values(SEL_KERN_DS, 0, 0xffffffff, SEG_TYPE_DATA);
+	set_gdt_values(SEL_USER_CODE, 0, 0xffffffff, SEG_TYPE_DATA);
+	set_gdt_values(SEL_USER_DATA, 0, 0xffffffff, SEG_TYPE_DATA);
 }
+
 
 /**
  * load gdt table to memory and do segment jump.
@@ -66,6 +67,7 @@ void setup_gdt(void)
 	lgdt();
 }
 
+
 /**
  * set gdt descriptor values.
  * @param index is index of gdt descriptor tabel.
@@ -76,7 +78,7 @@ void setup_gdt(void)
 void set_gdt_values(u_int32_t index, u_int32_t base, 
 		    u_int32_t limit, u_int8_t type)
 {
-	struct segment_descriptor *p = &gdt[index];
+	struct segment_descriptor *p = &gdt[index >> 3];
 
 	// Change Sz and Gr bit by limit size.
 	if (limit > 65536)
@@ -94,8 +96,10 @@ void set_gdt_values(u_int32_t index, u_int32_t base,
 
 	p->limit_h |= (limit >> 16) & 0xf;
 
+	printk("0x%x p->type:0x%x p->limit_h:0x%x\n", index, p->type, p->limit_h);
 	gdt_count++;
 }
+
 
 /**
  * Search unused gdt table.
@@ -109,7 +113,7 @@ int search_unused_gdt_index(void)
 			idx = 1;
 
 		if (gdt[idx].type == 0)
-			return idx;
+			return idx << 8;
 
 	}
 
@@ -121,9 +125,18 @@ void gdt_types(void)
 {
 	int i;
 	for (i = 1; i < 10; i++) {
-		printk("gdt[%d:0x%x]'s type:0x%x\n", i, i * 8, gdt[i].type);
+		printk("gdt[%d:0x%x]'s type:0x%x\n", i, i << 3, gdt[i].type);
 
 	}
 }
 
-	
+void ltr(void)
+{
+	u_int16_t sel = SEL_TSS;
+	__asm__ __volatile__ ("ltr %0\n\t" ::"m"(sel));
+}
+
+void lldt(u_int32_t addr)
+{
+	__asm__ __volatile__ ("lldt %0;\n\t" ::"m"(addr));
+}	
