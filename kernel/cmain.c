@@ -60,8 +60,8 @@ void cmain(unsigned long magic, unsigned long addr)
 
 	// Init timer handler.
 	timer_init();
-#if 0
-	// Setup paging.
+
+#if 0	// Setup paging.
 	setup_paging();
 
 	// setup memory for kmalloc().

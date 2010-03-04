@@ -17,6 +17,13 @@ static void timer_handler(struct registers regs);
  */
 static void timer_handler(struct registers regs)
 {
+#if 0
+	printk("cs:0x%x ds:0x%x eip:0x%x eflags:0x%x esp0:0x%x esp:0x%x ss0:0x%x\n",
+	       regs.cs, regs.ds, regs.eip,
+	       regs.eflags, regs.esp,
+	       regs.useresp, regs.ss);
+#endif
+
 	schedule();
 	counter++;
 }

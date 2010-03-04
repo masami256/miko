@@ -21,8 +21,9 @@ static void setup_gdt_descriptor(void)
 	set_gdt_values(0, 0, 0, 0);
 	set_gdt_values(SEL_KERN_CS, 0, 0xffffffff, SEG_TYPE_CODE);
 	set_gdt_values(SEL_KERN_DS, 0, 0xffffffff, SEG_TYPE_DATA);
-	set_gdt_values(SEL_USER_CODE, 0, 0xffffffff, SEG_TYPE_DATA);
-	set_gdt_values(SEL_USER_DATA, 0, 0xffffffff, SEG_TYPE_DATA);
+	set_gdt_values(SEL_KERN_SS, 0, 0, SEG_TYPE_STACK);
+//	set_gdt_values(SEL_USER_CODE, 0, 0xffffffff, SEG_TYPE_DATA);
+//	set_gdt_values(SEL_USER_DATA, 0, 0xffffffff, SEG_TYPE_DATA);
 }
 
 
@@ -47,6 +48,7 @@ static void lgdt(void)
 		"movl %eax, %es\n\t;"
 		"movl %eax, %fs\n\t"
 		"movl %eax, %gs\n\t"
+		"movl $0x18, %eax\n\t"
 		"movl %eax, %ss\n\t"
 		);
 
@@ -130,13 +132,3 @@ void gdt_types(void)
 	}
 }
 
-void ltr(void)
-{
-	u_int16_t sel = SEL_TSS;
-	__asm__ __volatile__ ("ltr %0\n\t" ::"m"(sel));
-}
-
-void lldt(u_int32_t addr)
-{
-	__asm__ __volatile__ ("lldt %0;\n\t" ::"m"(addr));
-}	

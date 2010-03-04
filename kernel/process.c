@@ -19,29 +19,32 @@ struct tss_struct tss[2];
 static void test_task1(void)
 {
 	u_int32_t i;
-	u_int32_t eflags;
-	
-	for (i = 0; ; i++) {
+
+	for (i = 0; i < 10000; i++) {
 		wait_loop_usec(500);
 		if (!(i % 100)) {
-		    printk("AAAAA");
-		    switch_task(0x30);
+			printk("AAAAA");
 		}
 	}
+	return ;
 }
 
 static void test_task2(void)
 {
 	u_int32_t i;
-	u_int32_t eflags;
 
-	for (i = 0; ; i++) {
+	for (i = 0; i < 10000; i++) {
 		wait_loop_usec(500);
 		if (!(i % 100)) {
 		    printk("BBBBB");
-		    switch_task(0x28);
 		}
 	}
+	return ;
+}
+
+static inline void ltr(u_int16_t sel)
+{
+	__asm__ __volatile__ ("ltr %0\n\t" ::"m"(sel));
 }
  
 struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
@@ -59,7 +62,7 @@ struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
  
 	memset(p, 0x0, sizeof(*p));
 
-	printk("cs:0x%x ds:0x%x ss:0x%x esp:0x%x\n", cs, ds, ss, esp);
+	printk("cs:0x%x ds:0x%x ss:0x%x esp:0x%x esp0:0x%x ss0:0x%x\n", cs, ds, ss, esp, esp0, ss0);
 
 	p->cs = cs;
 	p->eip = eip;
@@ -67,9 +70,9 @@ struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
 	p->esp = esp;
 
 	p->ds = ds;
-	p->es = 0x10;
-	p->fs = 0x10;
-	p->gs = 0x10;
+	p->es = ds;
+	p->fs = ds;
+	p->gs = ds;
 	p->ss = ss;
 	p->esp = esp0;
 	p->ss0 = ss0;
@@ -92,6 +95,8 @@ static void switch_task(u_int16_t sel)
 	tmp.b = sel;
 
 	__asm__ __volatile__ ("ljmp %0\n\t" ::"m"(tmp)); 
+	return ;
+//	__asm__ __volatile__ ("lcall %0\n\t" ::"m"(tmp)); 
 }
 
 
@@ -116,28 +121,37 @@ int setup_tss(void)
 			     :"=g"(cs), "=g"(ds), "=g"(ss), "=g"(esp)
 		);
  
-	printk("cs:0x%x ds:0x%x ss:0x%x esp:0x%x\n", cs, ds, ss, esp);
+//	printk("cs:0x%x ds:0x%x ss:0x%x esp:0x%x\n", cs, ds, ss, esp);
 
-	set_tss(cs, ds, (u_int32_t) &test_task1, 0x202,
-			 esp - PROCESS_STACK_SIZE, ss,
-			 esp, ss);
- 
+ 	set_tss(cs, ds, (u_int32_t) &test_task1, 0x202,
+		esp - 8192, ss,
+		esp, ss);
+	
 	set_tss(cs, ds, (u_int32_t) &test_task2, 0x202,
-			 esp - (PROCESS_STACK_SIZE * 2), ss,
-			 esp, ss);
+		esp - (8192 * 2), ss,
+		esp, ss);
  
+	set_gdt_values(0x20, (u_int32_t) &tss[0], sizeof(struct tss_struct), SEG_TYPE_TSS); 
+	set_gdt_values(0x28, (u_int32_t) &tss[1], sizeof(struct tss_struct), SEG_TYPE_TSS); 
 
-	set_gdt_values(SEL_TSS, (u_int32_t) &tss[0], sizeof(struct tss_struct), SEG_TYPE_TSS); 
-	set_gdt_values(0x30, (u_int32_t) &tss[1], sizeof(struct tss_struct), SEG_TYPE_TSS); 
-
-	ltr();
+	ltr(0x20);
 
 	return 0;
 }
 
 void schedule(void)
 {
-	test_task1();
+	static int current = 0;
+	static int t[2] = { 0x20, 0x28 };
+	static bool b = false;
+
+	if (b) {
+		current ^= 0x01;
+		switch_task(t[current]);
+	} else {
+		b = true;
+		test_task1();
+	}
+
+	return ;
 }
-
-

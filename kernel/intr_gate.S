@@ -1,32 +1,6 @@
 .code32
 .align 4
 
-.extern soft_intr_handler
-.globl soft_intr_handler
-	cli
-	pusha
-	mov	%ds, %ax
-	push 	%eax
-
-	mov	$0x10, %ax 
-	mov	%ax, %ds
-	mov	%ax, %es
-	mov	%ax, %fs
-	mov	%ax, %gs 
-
-	call	irq_handler
-
-	pop	%ebx
-	mov	%bx, %ds
-	mov	%bx, %es
-	mov	%bx, %fs
-	mov	%bx, %gs
-
-	popa
-	add 	$0x8, %esp
-	sti
-	iret
-
 #define isr_gate_stub(num) \
 .globl isr_gate##num		;\
 isr_gate##num: 			;\
@@ -49,13 +23,15 @@ isr_common:
 	pusha
 	mov	%ds, %ax
 	push	%eax
-
+	
 	mov	$0x10, %ax 
 	mov	%ax, %ds
 	mov	%ax, %es
 	mov	%ax, %fs
-	mov	%ax, %gs 
-	
+	mov	%ax, %gs
+	mov	$0x18, %ax
+	mov	%ax, %gs
+
 	call 	isr_handler
 
 	pop	%ebx
@@ -63,7 +39,7 @@ isr_common:
 	mov	%bx, %es
 	mov	%bx, %fs
 	mov	%bx, %gs
-
+	
 	popa
 	add 	$0x8, %esp
 	sti
@@ -80,6 +56,8 @@ irq_common:
 	mov	%ax, %es
 	mov	%ax, %fs
 	mov	%ax, %gs 
+	mov	$0x18, %ax
+	mov	%ax, %gs
 
 	call	irq_handler
 

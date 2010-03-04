@@ -51,5 +51,4 @@ struct handler_define  handler_info[HANDLER_INFO_NUM] = {
 	{ (u_int32_t) irq_gate13, SEL_KERN_CS, GATE_TYPE_INTR_GATE },
 	{ (u_int32_t) irq_gate14, SEL_KERN_CS, GATE_TYPE_INTR_GATE },
 	{ (u_int32_t) irq_gate15, SEL_KERN_CS, GATE_TYPE_INTR_GATE },
-	{ (u_int32_t) 0, SEL_KERN_CS, GATE_TYPE_TASK_GATE },
 };

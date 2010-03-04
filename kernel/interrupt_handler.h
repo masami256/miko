@@ -3,7 +3,7 @@
 
 #include <mikoOS/kernel.h>
 
-#define HANDLER_INFO_NUM 49
+#define HANDLER_INFO_NUM 48
 
 struct handler_define {
 	u_int32_t base;
