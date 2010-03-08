@@ -15,6 +15,7 @@
 static void switch_task(u_int16_t sel) __attribute__ ((noinline));
 
 struct tss_struct tss[2];
+static char process_stack[2][8192];
 
 static void test_task1(void)
 {
@@ -23,7 +24,7 @@ static void test_task1(void)
 	for (i = 0; i < 10000; i++) {
 		wait_loop_usec(500);
 		if (!(i % 100)) {
-			printk("AAAAA");
+			printk("A");
 		}
 	}
 	return ;
@@ -36,7 +37,7 @@ static void test_task2(void)
 	for (i = 0; i < 10000; i++) {
 		wait_loop_usec(500);
 		if (!(i % 100)) {
-		    printk("BBBBB");
+		    printk("B");
 		}
 	}
 	return ;
@@ -74,7 +75,7 @@ struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
 	p->fs = ds;
 	p->gs = ds;
 	p->ss = ss;
-	p->esp = esp0;
+	p->esp0 = esp0;
 	p->ss0 = ss0;
 
 	p->io_bitmap = 0x80000000;
@@ -124,17 +125,17 @@ int setup_tss(void)
 //	printk("cs:0x%x ds:0x%x ss:0x%x esp:0x%x\n", cs, ds, ss, esp);
 
  	set_tss(cs, ds, (u_int32_t) &test_task1, 0x202,
-		esp - 8192, ss,
+		(u_int32_t) &process_stack[0], ss,
 		esp, ss);
 	
 	set_tss(cs, ds, (u_int32_t) &test_task2, 0x202,
-		esp - (8192 * 2), ss,
+		(u_int32_t) & process_stack[1], ss,
 		esp, ss);
  
-	set_gdt_values(0x20, (u_int32_t) &tss[0], sizeof(struct tss_struct), SEG_TYPE_TSS); 
-	set_gdt_values(0x28, (u_int32_t) &tss[1], sizeof(struct tss_struct), SEG_TYPE_TSS); 
+	set_gdt_values(0x28, (u_int32_t) tss[0], sizeof(struct tss_struct), SEG_TYPE_TSS); 
+	set_gdt_values(0x30, (u_int32_t) tss[1], sizeof(struct tss_struct), SEG_TYPE_TSS); 
 
-	ltr(0x20);
+	ltr(0x28);
 
 	return 0;
 }
@@ -142,7 +143,7 @@ int setup_tss(void)
 void schedule(void)
 {
 	static int current = 0;
-	static int t[2] = { 0x20, 0x28 };
+	static int t[2] = { 0x28, 0x30 };
 	static bool b = false;
 
 	if (b) {

@@ -61,7 +61,7 @@ void cmain(unsigned long magic, unsigned long addr)
 	// Init timer handler.
 	timer_init();
 
-#if 0	// Setup paging.
+	// Setup paging.
 	setup_paging();
 
 	// setup memory for kmalloc().
@@ -79,7 +79,7 @@ void cmain(unsigned long magic, unsigned long addr)
 	if (p)
 		p->op->open();
 #endif
-#endif
+
 	// setup tss for processes.
 	setup_tss();
 

@@ -29,8 +29,6 @@ isr_common:
 	mov	%ax, %es
 	mov	%ax, %fs
 	mov	%ax, %gs
-	mov	$0x18, %ax
-	mov	%ax, %gs
 
 	call 	isr_handler
 
@@ -39,7 +37,7 @@ isr_common:
 	mov	%bx, %es
 	mov	%bx, %fs
 	mov	%bx, %gs
-	
+
 	popa
 	add 	$0x8, %esp
 	sti
@@ -56,8 +54,6 @@ irq_common:
 	mov	%ax, %es
 	mov	%ax, %fs
 	mov	%ax, %gs 
-	mov	$0x18, %ax
-	mov	%ax, %gs
 
 	call	irq_handler
 

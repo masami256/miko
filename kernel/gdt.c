@@ -21,9 +21,9 @@ static void setup_gdt_descriptor(void)
 	set_gdt_values(0, 0, 0, 0);
 	set_gdt_values(SEL_KERN_CS, 0, 0xffffffff, SEG_TYPE_CODE);
 	set_gdt_values(SEL_KERN_DS, 0, 0xffffffff, SEG_TYPE_DATA);
-	set_gdt_values(SEL_KERN_SS, 0, 0, SEG_TYPE_STACK);
-//	set_gdt_values(SEL_USER_CODE, 0, 0xffffffff, SEG_TYPE_DATA);
-//	set_gdt_values(SEL_USER_DATA, 0, 0xffffffff, SEG_TYPE_DATA);
+//	set_gdt_values(SEL_KERN_SS, 0, 0, SEG_TYPE_STACK);
+	set_gdt_values(SEL_USER_CODE, 0, 0xffffffff, SEG_TYPE_USER_CODE);
+	set_gdt_values(SEL_USER_DATA, 0, 0xffffffff, SEG_TYPE_USER_DATA);
 }
 
 
@@ -43,13 +43,12 @@ static void lgdt(void)
 	__asm__ (
 		"ljmp $0x08, $1f;\n\t"
 		"1:;\n\t"
-		"movl $0x10, %eax;\n\t"
-		"movl %eax, %ds;\n\t"
-		"movl %eax, %es\n\t;"
-		"movl %eax, %fs\n\t"
-		"movl %eax, %gs\n\t"
-		"movl $0x18, %eax\n\t"
-		"movl %eax, %ss\n\t"
+		"movw $0x10, %ax;\n\t"
+		"movw %ax, %ds;\n\t"
+		"movw %ax, %es\n\t;"
+		"movw %ax, %fs\n\t"
+		"movw %ax, %gs\n\t"
+		"movw %ax, %ss\n\t"
 		);
 
 }
