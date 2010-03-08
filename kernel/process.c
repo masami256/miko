@@ -21,11 +21,10 @@ static void test_task1(void)
 {
 	u_int32_t i;
 
-	for (i = 0; i < 10000; i++) {
+	while (1) {
 		wait_loop_usec(500);
-		if (!(i % 100)) {
-			printk("A");
-		}
+		printk("A");
+		switch_task(0x30);
 	}
 	return ;
 }
@@ -34,11 +33,10 @@ static void test_task2(void)
 {
 	u_int32_t i;
 
-	for (i = 0; i < 10000; i++) {
+	while (1) {
 		wait_loop_usec(500);
-		if (!(i % 100)) {
-		    printk("B");
-		}
+		printk("B");
+		switch_task(0x28);
 	}
 	return ;
 }
@@ -143,6 +141,7 @@ int setup_tss(void)
 
 void schedule(void)
 {
+#if 0
 	static int current = 0;
 	static int t[2] = { 0x28, 0x30 };
 	static bool b = false;
@@ -154,6 +153,8 @@ void schedule(void)
 		b = true;
       		test_task1();
 	}
-
+#else
+	test_task1();
+#endif
 	return ;
 }
