@@ -139,3 +139,7 @@ void setup_paging(void)
 
 }
 
+u_int32_t get_cr3(void)
+{
+	return (u_int32_t) &page_directory;
+}

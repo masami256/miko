@@ -25,6 +25,7 @@ static void test_task1(void)
 		wait_loop_usec(500);
 		if (!(i % 100)) {
 			printk("A");
+			switch_task(0x30);
 		}
 	}
 	return ;
@@ -38,6 +39,7 @@ static void test_task2(void)
 		wait_loop_usec(500);
 		if (!(i % 100)) {
 		    printk("B");
+		    switch_task(0x28);
 		}
 	}
 	return ;
@@ -55,14 +57,13 @@ struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
 {
 	struct tss_struct *p = NULL;
 	static int cnt = 0;
+	u_int32_t cr3;
 
 	p = &tss[cnt];
 //	p = kmalloc(sizeof(*p));
 	if (!p)
 		KERN_ABORT("kmalloc failed");
  
-	memset(p, 0x0, sizeof(*p));
-
 	printk("cs:0x%x ds:0x%x ss:0x%x esp:0x%x esp0:0x%x ss0:0x%x\n", cs, ds, ss, esp, esp0, ss0);
 
 	p->cs = cs;
@@ -70,6 +71,7 @@ struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
 	p->eflags = eflags;
 	p->esp = esp;
 
+	p->cr3 = get_cr3();
 	p->ds = ds;
 	p->es = ds;
 	p->fs = ds;
@@ -96,8 +98,9 @@ static void switch_task(u_int16_t sel)
 	tmp.b = sel;
 
 	__asm__ __volatile__ ("ljmp %0\n\t" ::"m"(tmp)); 
-	return ;
 //	__asm__ __volatile__ ("lcall %0\n\t" ::"m"(tmp)); 
+	return ;
+
 }
 
 
@@ -132,8 +135,8 @@ int setup_tss(void)
 		(u_int32_t) & process_stack[1], ss,
 		esp, ss);
  
-	set_gdt_values(0x28, (u_int32_t) tss[0], sizeof(struct tss_struct), SEG_TYPE_TSS); 
-	set_gdt_values(0x30, (u_int32_t) tss[1], sizeof(struct tss_struct), SEG_TYPE_TSS); 
+	set_gdt_values(0x28, (u_int32_t) &tss[0], sizeof(struct tss_struct), SEG_TYPE_TSS); 
+	set_gdt_values(0x30, (u_int32_t) &tss[1], sizeof(struct tss_struct), SEG_TYPE_TSS); 
 
 	ltr(0x28);
 
@@ -151,7 +154,7 @@ void schedule(void)
 		switch_task(t[current]);
 	} else {
 		b = true;
-		test_task1();
+      		test_task1();
 	}
 
 	return ;

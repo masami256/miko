@@ -4,6 +4,8 @@
 
 #define PROCESS_STACK_SIZE 4096
 
+u_int32_t get_cr3(void);
+
 // This structure is for Intel TSS feature.
 struct tss_struct {
 	u_int16_t backlink;
