@@ -25,7 +25,6 @@ static void test_task1(void)
 		wait_loop_usec(500);
 		if (!(i % 100)) {
 			printk("A");
-			switch_task(0x30);
 		}
 	}
 	return ;
@@ -39,7 +38,6 @@ static void test_task2(void)
 		wait_loop_usec(500);
 		if (!(i % 100)) {
 		    printk("B");
-		    switch_task(0x28);
 		}
 	}
 	return ;

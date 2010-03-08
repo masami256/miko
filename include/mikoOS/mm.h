@@ -16,5 +16,6 @@ typedef u_int32_t pte_t;
 
 void setup_paging(void);
 u_int32_t get_free_pages(u_int32_t pages);
+u_int32_t get_cr3(void);
 
 #endif // __MIKOOS_MM_H
