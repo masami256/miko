@@ -37,7 +37,7 @@ static void setup_pte(void)
  */
 static void set_cr3(void)
 {
-	__asm__ __volatile__("mov %0, %%cr3":: "b"(page_directory));
+	__asm__ __volatile__("mov %0, %%cr3\n\t":: "b"(page_directory));
 }
 
 /**
@@ -47,9 +47,9 @@ static void set_cr0(void)
 {
 	u_int32_t cr0;
 
-	__asm__ __volatile__("mov %%cr0, %0": "=b"(cr0));
+	__asm__ __volatile__("mov %%cr0, %0\n\t": "=b"(cr0));
 	cr0 |= 0x80000000;
-	__asm__ __volatile__("mov %0, %%cr0":: "b"(cr0));
+	__asm__ __volatile__("mov %0, %%cr0\n\t":: "b"(cr0));
 }
 
 /**
@@ -141,5 +141,8 @@ void setup_paging(void)
 
 u_int32_t get_cr3(void)
 {
-	return (u_int32_t) &page_directory;
+	u_int32_t cr3 = 0;
+
+	__asm__ __volatile__("mov %%cr3, %0\n\t" :"=b"(cr3));
+	return cr3;
 }
