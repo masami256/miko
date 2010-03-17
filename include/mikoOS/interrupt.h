@@ -1,7 +1,7 @@
 #ifndef __INTERRUPT_H
 #define __INTERRUPT_H
 
-#include <asm/register.h>
+#include <mikoOS/arch/x86/register.h>
 #include <mikoOS/arch/x86/descriptor_common.h>
 
 extern void setup_inir(void);
