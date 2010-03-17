@@ -74,11 +74,6 @@ void cmain(unsigned long magic, unsigned long addr)
 	init_ata_disk_driver();
 
 	show_all_registered_driver();
-#if 0
-	p = get_blk_driver("ATA disk");
-	if (p)
-		p->op->open();
-#endif
 
 	// setup tss for processes.
 	setup_tss();

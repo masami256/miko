@@ -10,20 +10,19 @@ volatile timer_t counter = 0;
 /////////////////////////////////////////////////
 // private functions
 /////////////////////////////////////////////////
-static void timer_handler(struct registers regs);
+static void timer_handler(struct registers *regs);
 
 /**
  * Timer handler test function currently.
  */
-static void timer_handler(struct registers regs)
+static void timer_handler(struct registers *regs)
 {
 #if 0
-	printk("cs:0x%x ds:0x%x eip:0x%x eflags:0x%x esp0:0x%x esp:0x%x ss0:0x%x\n",
-	       regs.cs, regs.ds, regs.eip,
-	       regs.eflags, regs.esp,
-	       regs.useresp, regs.ss);
+	printk("0x%x:0x%x:0x%x:0x%x:0x%x:0x%x:0x%x:0x%x:0x%x:0x%x\n",
+	       regs->edi, regs->esi, regs->ebp, regs->esp,
+	       regs->ebx, regs->edx, regs->ecx, regs->eax,
+	       regs->eip, regs->eflags);
 #endif
-
 	schedule();
 	counter++;
 }

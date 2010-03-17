@@ -3,13 +3,19 @@
 
 #include <sys/types.h>
 
-struct registers
-{
-	u_int32_t ds;                  // Data segment selector.
-	u_int32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
-	u_int32_t int_no, err_code;    // Interrupt number and error code (if applicable).
-	u_int32_t eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
-
+struct registers {
+	u_int32_t dummy; // don't know what is it.
+	u_int32_t edi;
+	u_int32_t esi;
+	u_int32_t ebp;
+	u_int32_t esp;
+	u_int32_t ebx;
+	u_int32_t edx;
+	u_int32_t ecx;
+	u_int32_t eax;
+	u_int32_t eip;
+	u_int32_t eflags;
 };
+
 
 #endif // __MIKOOS_REGISTER_H

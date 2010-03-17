@@ -21,7 +21,6 @@ static void setup_gdt_descriptor(void)
 	set_gdt_values(0, 0, 0, 0);
 	set_gdt_values(SEL_KERN_CS, 0, 0xffffffff, SEG_TYPE_CODE);
 	set_gdt_values(SEL_KERN_DS, 0, 0xffffffff, SEG_TYPE_DATA);
-//	set_gdt_values(SEL_KERN_SS, 0, 0, SEG_TYPE_STACK);
 	set_gdt_values(SEL_USER_CODE, 0, 0xffffffff, SEG_TYPE_USER_CODE);
 	set_gdt_values(SEL_USER_DATA, 0, 0xffffffff, SEG_TYPE_USER_DATA);
 }

@@ -12,7 +12,7 @@
 /////////////////////////////////////////////////
 // private functions
 /////////////////////////////////////////////////
-static void switch_task(u_int16_t sel) __attribute__ ((noinline));
+static void switch_task(u_int16_t sel);
 
 struct tss_struct tss[2];
 static char process_stack[2][8192];
@@ -104,7 +104,6 @@ static void switch_task(u_int16_t sel)
 // public functions
 /////////////////////////////////////////////////
 
-
 int setup_tss(void)
 {
 	u_int16_t cs, ds, ss;
@@ -128,9 +127,10 @@ int setup_tss(void)
 		esp, ss);
 	
 	set_tss(cs, ds, (u_int32_t) &test_task2, 0x202,
-		(u_int32_t) & process_stack[1], ss,
+		(u_int32_t) &process_stack[1], ss,
 		esp, ss);
  
+	
 	set_gdt_values(0x28, (u_int32_t) &tss[0], sizeof(struct tss_struct), SEG_TYPE_TSS); 
 	set_gdt_values(0x30, (u_int32_t) &tss[1], sizeof(struct tss_struct), SEG_TYPE_TSS); 
 

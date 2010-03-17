@@ -16,7 +16,7 @@ struct gate_descriptor intr_table[INTERRUPT_HANDLER_NUM];
 
 // Interrupt hander function which is called from ISR or IRQ handler.
 struct handler_function {
-	void (*func) (struct registers regs);
+	void (*func) (struct registers *regs);
 };
 struct handler_function handlers[INTERRUPT_HANDLER_NUM];
 
@@ -113,12 +113,12 @@ void setup_inir(void)
  * Interrupt service routine.
  * @param regs is register.
  */
-void isr_handler(struct registers regs) 
+void isr_handler(u_int32_t int_no, struct registers regs) 
 {
-	printk("ISR 0x%x\n", regs.int_no);
+	printk("ISR 0x%x\n", int_no);
 
-	if (handlers[regs.int_no].func != NULL)
-		handlers[regs.int_no].func(regs);
+	if (handlers[int_no].func != NULL)
+		handlers[int_no].func(&regs);
 
 }
 
@@ -126,22 +126,22 @@ void isr_handler(struct registers regs)
  * IRQ interrupt  routine.
  * @param regs is register.
  */
-void irq_handler(struct registers regs) 
+void irq_handler(u_int32_t int_no, struct registers regs) 
 {
-	if (regs.int_no >= 40)
+	if (int_no >= 40)
 		outb(0xA0, 0x20);
        
 	outb(0x20, 0x20);
 
-	if (handlers[regs.int_no].func != NULL)
-		handlers[regs.int_no].func(regs);
+	if (handlers[int_no].func != NULL)
+		handlers[int_no].func(&regs);
 }
 
 /**
  * Set interrupt handler function to function table.
  * @param f is handler function.
  */
-inline void set_handler_func(int idx, void (*f)(struct registers regs))
+inline void set_handler_func(int idx, void (*f)(struct registers *regs))
 {
 	handlers[idx].func = f;
 }

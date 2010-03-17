@@ -1,73 +1,31 @@
 .code32
 .align 4
-
+	
 #define isr_gate_stub(num) \
 .globl isr_gate##num		;\
 isr_gate##num: 			;\
 	cli			;\
-	push $##num		;\
-	jmp isr_common		;\
-
-
+	pushal			;\
+	pushl	%esp		;\
+	pushl 	$##num		;\
+	call 	isr_handler	;\
+	addl 	$8, %esp	;\
+	popal			;\
+	sti			;\
+	iret
+	
 #define irq_gate_stub(num_a,num_b) \
 .globl irq_gate##num_a 		;\
 irq_gate##num_a: 		;\
-	cli 			;\
-	push $0 		;\
-	push $##num_b 		;\
-	jmp irq_common		;\
-	
-	
-.extern isr_handler
-isr_common:
-	pusha
-	mov	%ds, %ax
-	push	%eax
-	
-	mov	$0x10, %ax 
-	mov	%ax, %ds
-	mov	%ax, %es
-	mov	%ax, %fs
-	mov	%ax, %gs
-
-	call 	isr_handler
-
-	pop	%ebx
-	mov	%bx, %ds
-	mov	%bx, %es
-	mov	%bx, %fs
-	mov	%bx, %gs
-
-	popa
-	add 	$0x8, %esp
-	sti
+	cli			;\
+	pushal			;\
+	pushl 	%esp		;\
+	pushl 	$##num_b	;\
+	call 	irq_handler	;\
+	addl 	$8, %esp	;\
+	popal			;\
+	sti			;\
 	iret
-
-.extern irq_handler
-irq_common:
-	pusha
-	mov	%ds, %ax
-	push 	%eax
-
-	mov	$0x10, %ax 
-	mov	%ax, %ds
-	mov	%ax, %es
-	mov	%ax, %fs
-	mov	%ax, %gs 
-
-	call	irq_handler
-
-	pop	%ebx
-	mov	%bx, %ds
-	mov	%bx, %es
-	mov	%bx, %fs
-	mov	%bx, %gs
-
-	popa
-	add 	$0x8, %esp
-	sti
-	iret
-
 
 isr_gate_stub(0)
 isr_gate_stub(1)

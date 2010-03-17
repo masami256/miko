@@ -3,8 +3,6 @@
 #include <mikoOS/mm.h>
 #include <mikoOS/interrupt.h>
 
-static void page_fault(struct registers regs);
-
 // This should be page aligned.
 pgd_t page_directory[PGD_SIZE] __attribute__((aligned(0x1000))); 
 pte_t pte[PTE_SIZE];
@@ -12,6 +10,8 @@ pte_t pte[PTE_SIZE];
 /////////////////////////////////////////////////
 // private functions
 /////////////////////////////////////////////////
+static void page_fault(struct registers *regs);
+
 /**
  * Setup PGD and PTE.
  */
@@ -55,7 +55,7 @@ static void set_cr0(void)
 /**
  * Page fault handler test function currently.
  */
-static void page_fault(struct registers regs)
+static void page_fault(struct registers *regs)
 {
 	printk("Page Fault\n");
 	while (1);
