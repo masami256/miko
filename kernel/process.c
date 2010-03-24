@@ -142,18 +142,6 @@ int setup_tss(void)
 void schedule(void)
 {
 #if 0
-	static int current = 0;
-	static int t[2] = { 0x28, 0x30 };
-	static bool b = false;
-
-	if (b) {
-		current ^= 0x01;
-		switch_task(t[current]);
-	} else {
-		b = true;
-      		test_task1();
-	}
-#else
 	test_task1();
 #endif
 	return ;

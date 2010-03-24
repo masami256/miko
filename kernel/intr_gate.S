@@ -27,6 +27,18 @@ irq_gate##num_a: 		;\
 	sti			;\
 	iret
 
+.globl soft_intr_handler
+soft_intr_handler:
+	cli
+	pushal
+	pushl 	%esp
+	pushl 	%eax
+	call 	software_interrupt_handler
+	addl 	$8, %esp
+	popal
+	sti
+	iret
+	
 isr_gate_stub(0)
 isr_gate_stub(1)
 isr_gate_stub(2)

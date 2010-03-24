@@ -115,11 +115,8 @@ void setup_inir(void)
  */
 void isr_handler(u_int32_t int_no, struct registers regs) 
 {
-	printk("ISR 0x%x\n", int_no);
-
 	if (handlers[int_no].func != NULL)
 		handlers[int_no].func(&regs);
-
 }
 
 /**
@@ -146,3 +143,7 @@ inline void set_handler_func(int idx, void (*f)(struct registers *regs))
 	handlers[idx].func = f;
 }
 
+void software_interrupt_handler(u_int32_t int_no, struct registers regs)
+{
+	printk("0x%x : %s\n", int_no, __FUNCTION__);
+}

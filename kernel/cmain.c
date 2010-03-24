@@ -82,6 +82,10 @@ void cmain(unsigned long magic, unsigned long addr)
 
 	show_startup_message();
 
+	__asm__ ("xorl %eax, %eax\n\t"
+		 "movl $0xbeef, %eax\n\t"
+		 "int $0x80\n\t");
+
 	while (1);
 
 }
