@@ -7,4 +7,6 @@
 
 #include <sys/types.h>
 
+#define UNUSED __attribute__((unused)) 
+
 #endif // __MIKOOR_KERNE_H

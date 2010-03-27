@@ -45,6 +45,6 @@ struct tss_struct {
 	u_int32_t io_bitmap;
 } __attribute__((packed));
 
-void scheduler(void);
+void schedule(void);
 
 #endif // __MIKOOS_PROCESS_H

@@ -129,7 +129,7 @@ void kfree(void *ptr)
 
 			tmp = (struct kmalloc_header *) p->prev;
 
-			printk("%d byte is going to be freed\n", tmp->size);
+			printk("%u byte is going to be freed\n", tmp->size);
 
 			// if next_free_area is free area, make big free area.
 			if (next_free_area == p) {
@@ -156,6 +156,7 @@ void kfree(void *ptr)
 }
 
 // for test.
+#ifdef KMALLOC_TEST
 int kmalloc_test(void)
 {
 	char *p, *pp;
@@ -185,3 +186,5 @@ int kmalloc_test(void)
 
 	return 0;
 }
+#endif // KMALLOC_TEST
+

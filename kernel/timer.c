@@ -15,14 +15,8 @@ static void timer_handler(struct registers *regs);
 /**
  * Timer handler test function currently.
  */
-static void timer_handler(struct registers *regs)
+static void timer_handler(UNUSED struct registers *regs)
 {
-#if 0
-	printk("0x%x:0x%x:0x%x:0x%x:0x%x:0x%x:0x%x:0x%x:0x%x:0x%x\n",
-	       regs->edi, regs->esi, regs->ebp, regs->esp,
-	       regs->ebx, regs->edx, regs->ecx, regs->eax,
-	       regs->eip, regs->eflags);
-#endif
 	schedule();
 	counter++;
 }

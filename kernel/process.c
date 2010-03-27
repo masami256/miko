@@ -5,6 +5,7 @@
 #include <mikoOS/kmalloc.h>
 #include <mikoOS/lock.h>
 #include <mikoOS/timer.h>
+#include <mikoOS/mm.h>
 #include "process.h"
 #include "gdt.h"
 #include "interrupt_handler.h"
@@ -134,7 +135,7 @@ int setup_tss(void)
 
 void schedule(void)
 {
-#if 0
+#if 1
 	test_task1();
 #endif
 	return ;
