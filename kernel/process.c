@@ -19,8 +19,6 @@ static char process_stack[2][8192];
 
 static void test_task1(void)
 {
-	u_int32_t i;
-
 	while (1) {
 		wait_loop_usec(500);
 		printk("A");
@@ -31,8 +29,6 @@ static void test_task1(void)
 
 static void test_task2(void)
 {
-	u_int32_t i;
-
 	while (1) {
 		wait_loop_usec(500);
 		printk("B");
@@ -53,7 +49,6 @@ struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
 {
 	struct tss_struct *p = NULL;
 	static int cnt = 0;
-	u_int32_t cr3;
 
 	p = &tss[cnt];
 //	p = kmalloc(sizeof(*p));
@@ -109,8 +104,6 @@ int setup_tss(void)
 	u_int16_t cs, ds, ss;
 	u_int32_t esp;
 
-	int i;
- 
 	printk("Setup TSS\n");
  
 	__asm__ __volatile__("movw %%cs, %0\n\t;"
