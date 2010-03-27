@@ -20,7 +20,47 @@
 // cmain() is called from head.S.
 extern void cmain(unsigned long magic, unsigned long addr);
 
-void show_startup_message(void)
+static void test_syscall(void)
+{
+	__asm__ ("xorl %eax, %eax\n\t"
+		 "movl $0, %eax\n\t"
+		 "int $0x80\n\t");
+
+	__asm__ ("xorl %eax, %eax\n\t"
+		 "movl $0x1, %eax\n\t"
+		 "int $0x80\n\t");
+
+	__asm__ ("xorl %eax, %eax\n\t"
+		 "movl $0x2, %eax\n\t"
+		 "int $0x80\n\t");
+
+	__asm__ ("xorl %eax, %eax\n\t"
+		 "movl $0x3, %eax\n\t"
+		 "int $0x80\n\t");
+
+	__asm__ ("xorl %eax, %eax\n\t"
+		 "movl $0x4, %eax\n\t"
+		 "int $0x80\n\t");
+
+	__asm__ ("xorl %eax, %eax\n\t"
+		 "movl $0x5, %eax\n\t"
+		 "int $0x80\n\t");
+
+	__asm__ ("xorl %eax, %eax\n\t"
+		 "movl $0x6, %eax\n\t"
+		 "int $0x80\n\t");
+
+	__asm__ ("xorl %eax, %eax\n\t"
+		 "movl $0x7, %eax\n\t"
+		 "int $0x80\n\t");
+
+	__asm__ ("xorl %eax, %eax\n\t"
+		 "movl $0xbeef, %eax\n\t"
+		 "int $0x80\n\t");
+
+}
+
+static void show_startup_message(void)
 {
 	printk("Welcome to mikoOS!\n");
 }
@@ -82,9 +122,7 @@ void cmain(unsigned long magic, unsigned long addr)
 
 	show_startup_message();
 
-	__asm__ ("xorl %eax, %eax\n\t"
-		 "movl $0xbeef, %eax\n\t"
-		 "int $0x80\n\t");
+	test_syscall();
 
 	while (1);
 

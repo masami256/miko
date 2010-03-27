@@ -9,7 +9,9 @@ objs = cmain.o \
 	interrupt.o \
 	timer.o \
 	mm/mm.o \
-	process.o
+	process.o \
+	syscall.o \
+	syscall_table.o
 
 all: $(objs)
 	cd mm && make

@@ -2,6 +2,7 @@
 #include <mikoOS/lock.h>
 #include <mikoOS/printk.h>
 #include <mikoOS/interrupt.h>
+#include <mikoOS/syscall.h>
 #include <asm/io.h>
 #include "interrupt_handler.h"
 
@@ -145,5 +146,9 @@ inline void set_handler_func(int idx, void (*f)(struct registers *regs))
 
 void software_interrupt_handler(u_int32_t int_no, struct registers regs)
 {
-	printk("0x%x : %s\n", int_no, __FUNCTION__);
+	if (int_no < NR_SYSCALLS) 
+		syscalls[int_no].f(&regs);
+	else 
+		printk("unknown syscall number 0x%x\n", int_no);
+
 }
