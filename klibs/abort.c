@@ -6,9 +6,9 @@
 /////////////////////////////////////////////////
 // private functions
 /////////////////////////////////////////////////
-static void general_protection_fault_handler(struct registers regs);
+static void general_protection_fault_handler(struct registers *regs);
 
-static void general_protection_fault_handler(struct registers regs)
+static void general_protection_fault_handler(struct registers *regs)
 {
 	printk("General Protection Fault occured\n");
 	cli();
