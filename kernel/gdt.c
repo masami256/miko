@@ -1,4 +1,5 @@
 #include <mikoOS/kernel.h>
+#include <mikoOS/printk.h>
 #include "gdt.h"
 #include "process.h"
 
@@ -96,7 +97,7 @@ void set_gdt_values(u_int32_t index, u_int32_t base,
 
 	p->limit_h |= (limit >> 16) & 0xf;
 
-	printk("0x%x p->type:0x%x p->limit_h:0x%x\n", index, p->type, p->limit_h);
+	printk("0x%lx p->type:0x%x p->limit_h:0x%x\n", index, p->type, p->limit_h);
 	gdt_count++;
 }
 

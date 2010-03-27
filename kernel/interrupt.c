@@ -149,6 +149,6 @@ void software_interrupt_handler(u_int32_t int_no, struct registers regs)
 	if (int_no < NR_SYSCALLS) 
 		syscalls[int_no].f(&regs);
 	else 
-		printk("unknown syscall number 0x%x\n", int_no);
+		printk("unknown syscall number 0x%lx\n", int_no);
 
 }

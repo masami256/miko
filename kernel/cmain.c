@@ -33,7 +33,6 @@ static void show_startup_message(void)
 void cmain(unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi = (multiboot_info_t *) addr;
-	struct blk_device_drivers *p;
 	
 	// initialize console to display messages.
 	cls();

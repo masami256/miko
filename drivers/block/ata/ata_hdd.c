@@ -220,7 +220,7 @@ static void get_base_address(void)
 	for (i = 0x10; i <= 0x24; i += 0x04) {
 		this_device->base_address = pci_data_read(this_device, i);
 		if (this_device->base_address) {
-			printk("ATA Base Address is 0x%x(0x%x)\n", this_device->base_address, i);
+			printk("ATA Base Address is 0x%lx(0x%x)\n", this_device->base_address, i);
 			break;
 		}
 	}
@@ -433,7 +433,7 @@ static bool sector_rw_common(u_int8_t cmd, int device, u_int32_t sector)
 
 	// sector number need to be checked.
 	if (sector > max_logical_sector_num) {
-		printk("Invalid Sector number 0x%x\n", sector);
+		printk("Invalid Sector number 0x%lx\n", sector);
 		return false;
 	}
 

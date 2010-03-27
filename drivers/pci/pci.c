@@ -71,8 +71,6 @@ static bool store_pci_device_to_list(u_int8_t bus, u_int8_t devfn,
 				     u_int32_t class, u_int32_t header,
 				     u_int32_t subsystem);
 
-static bool find_pci_bios32(void);
-
 static inline int is_multi_function(u_int32_t data)
 {
 	return (data & 0x800000) ? 1 : 0;
@@ -288,6 +286,8 @@ static u_int32_t find_pci_data(u_int8_t bus, u_int8_t dev)
 	return 0;
 }
 
+#ifdef USE_PCI_BIOS32
+static bool find_pci_bios32(void);
 /**
  * Find PCI BIOS.
  * @ret bool PCI BIOS is found or not.
@@ -314,8 +314,8 @@ static bool find_pci_bios32(void)
 					sum += bios32->data[i];
 
 				if (!sum) {
-					printk("found pci bios32 at 0x%x\n", addr);
-					printk("PCI BIOS32 entry point is 0x%x\n", bios32->fields.entry);
+					printk("found pci bios32 at 0x%lx\n", addr);
+					printk("PCI BIOS32 entry point is 0x%lx\n", bios32->fields.entry);
 					printk("PCI BIOS32 revision is 0x%x\n", bios32->fields.rev);
 					return true;
 				}
@@ -327,6 +327,7 @@ static bool find_pci_bios32(void)
 	return false;
  
 }
+#endif // USE_PCI_BIOS32
 
 /////////////////////////////////////////////////
 // public functions
@@ -354,7 +355,7 @@ void show_all_pci_device(void)
 	struct pci_device_list *p;
 
 	for (p = pci_device_head.next; p != &pci_device_head; p = p->next)
-		printk("Found Device: Bus %d:Devfn %d:Vender 0x%x:Device 0x%x:func %d:header 0x%x:Class 0x%x-0x%x:Multi %d\n", 
+		printk("Found Device: Bus %d:Devfn %d:Vender 0x%x:Device 0x%x:func %d:header 0x%x:Class 0x%lx-0x%lx:Multi %d\n", 
 		       p->data.bus, p->data.devfn, 
 		       p->data.vender, p->data.devid, 
 		       p->data.func, p->data.header_type,

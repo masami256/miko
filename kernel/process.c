@@ -56,7 +56,7 @@ struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
 	if (!p)
 		KERN_ABORT("kmalloc failed");
  
-	printk("cs:0x%x ds:0x%x ss:0x%x esp:0x%x esp0:0x%x ss0:0x%x\n", cs, ds, ss, esp, esp0, ss0);
+	printk("cs:0x%x ds:0x%x ss:0x%x esp:0x%lx esp0:0x%lx ss0:0x%x\n", cs, ds, ss, esp, esp0, ss0);
 
 	p->cs = cs;
 	p->eip = eip;
@@ -84,12 +84,12 @@ static void switch_task(u_int16_t sel)
 	struct far_pointer {
 		u_int32_t a;
 		u_int16_t b;
-	} tmp __attribute__((packed));
+	} tmp;
 
 	tmp.a = 0;
 	tmp.b = sel;
 
-	__asm__ __volatile__ ("ljmp %0\n\t" ::"m"(tmp)); 
+	__asm__ __volatile__ ("ljmp *%0\n\t" ::"m"(tmp)); 
 //	__asm__ __volatile__ ("lcall %0\n\t" ::"m"(tmp)); 
 	return ;
 

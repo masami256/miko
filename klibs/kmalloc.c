@@ -129,7 +129,7 @@ void kfree(void *ptr)
 
 			tmp = (struct kmalloc_header *) p->prev;
 
-			printk("%u byte is going to be freed\n", tmp->size);
+			printk("%lu byte is going to be freed\n", tmp->size);
 
 			// if next_free_area is free area, make big free area.
 			if (next_free_area == p) {

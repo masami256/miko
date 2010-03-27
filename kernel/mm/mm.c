@@ -55,7 +55,7 @@ static void set_cr0(void)
 /**
  * Page fault handler test function currently.
  */
-static void page_fault(struct registers *regs)
+static void page_fault(UNUSED struct registers *regs)
 {
 	printk("Page Fault\n");
 	while (1);
