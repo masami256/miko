@@ -1,7 +1,7 @@
 #ifndef __MIKOOS_UNISTD_H
 #define __MIKOOS_UNISTD_H 1
 
-#include <asm/register.h>
+#include <mikoOS/register.h>
 
 // define syscall.
 long sys_unused(struct registers *regs); // 0

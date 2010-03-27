@@ -1,7 +1,7 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/unistd.h>
 #include <mikoOS/printk.h>
-#include <asm/register.h>
+#include <mikoOS/register.h>
 
 long sys_unused(struct registers *regs)
 {

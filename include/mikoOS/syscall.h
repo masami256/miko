@@ -1,7 +1,7 @@
 #ifndef __MIKOOS_SYSCALL_H
 #define __MIKOOS_SYSCALL_H 1
 
-#include <asm/register.h>
+#include <mikoOS/register.h>
 
 #define NR_SYSCALLS (6 + 1)
 
