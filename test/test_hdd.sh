@@ -23,7 +23,7 @@ elif [ "$1" = "qemu" ]; then
     cmd="$create_cmd create -f qcow2 $test_img 10M"
 elif [ "$1" = "bochs" ]; then
     create_cmd="/usr/bin/bximage"
-    cmd="$create_cmd -hd -size=10 -q $test_img"
+    cmd="$create_cmd -q -hd -size=10 -mode=flat $test_img"
 else
     create_cmd="/bin/dd"
     cmd="$create_cmd if=/dev/zero of=$test_img bs=1M count=10"    
