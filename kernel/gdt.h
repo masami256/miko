@@ -16,6 +16,4 @@ void set_ldt_values(u_int32_t index, u_int32_t base,
 
 int search_unused_gdt_index(void);
 
-void gdt_types(void);
-
 #endif // SEGMENT_H

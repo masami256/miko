@@ -56,7 +56,7 @@ struct tss_struct *set_tss(u_int16_t cs, u_int16_t ds,
 	if (!p)
 		KERN_ABORT("kmalloc failed");
  
-	printk("cs:0x%x ds:0x%x ss:0x%x esp:0x%lx esp0:0x%lx ss0:0x%x\n", cs, ds, ss, esp, esp0, ss0);
+//	printk("cs:0x%x ds:0x%x ss:0x%x esp:0x%lx esp0:0x%lx ss0:0x%x\n", cs, ds, ss, esp, esp0, ss0);
 
 	p->cs = cs;
 	p->eip = eip;
@@ -135,7 +135,7 @@ int setup_tss(void)
 
 void schedule(void)
 {
-#if 1
+#if 0
 	test_task1();
 #endif
 	return ;
