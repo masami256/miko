@@ -6,31 +6,6 @@ have_qemu=0
 
 test_img="test/img/hda.img"
 
-function do_create_by_qemu()
-{
-    cmd="$create_cmd create -f qcow2 $test_img 10M"
-    echo $cmd
-    $cmd
-
-}
-
-function do_create_by_dd()
-{
-    cmd="dd if=/dev/zero of=$test_img bs=1M count=10"
-    echo $cmd
-    $cmd
-}
-
-function create_hdd_image()
-{
-
-    if [ $have_qemu = 1 ]; then
-	do_create_by_qemu
-    else
-	do_create_by_dd
-    fi
-}
-
 function remove_old_file() 
 {
     if [ -f $test_img ]; then
@@ -39,18 +14,27 @@ function remove_old_file()
     fi
 }
 
-if [ -f "/usr/bin/kvm-img" ]; then
+
+if [ "$1" = "kvm" ]; then
     create_cmd="/usr/bin/kvm-img"
-    have_qemu=1
-elif [ -f "/usr/bin/qemu-img" ]; then
+    cmd="$create_cmd create -f qcow2 $test_img 10M"
+elif [ "$1" = "qemu" ]; then
     create_cmd="/usr/bin/qemu-img"
-    have_qemu=1
+    cmd="$create_cmd create -f qcow2 $test_img 10M"
+elif [ "$1" = "bochs" ]; then
+    create_cmd="/usr/bin/bximage"
+    cmd="$create_cmd -hd -size=10 -q $test_img"
 else
     create_cmd="/bin/dd"
+    cmd="$create_cmd if=/dev/zero of=$test_img bs=1M count=10"    
 fi
 
 remove_old_file
-create_hdd_image
+
+echo $cmd
+$cmd
+
+/sbin/mkfs.ext2 $test_img
 
 echo "Done."
 
