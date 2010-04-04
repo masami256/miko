@@ -15,6 +15,9 @@ drivers_dir = drivers
 driver_pci_dir = $(drivers_dir)/pci
 driver_blk_dir = $(drivers_dir)/block
 
+fs_dir = fs
+ext2_fs_dir = $(fs_dir)/ext2
+
 klib_dir = klibs
 
 objs = $(boot_dir)/head.o \
@@ -31,6 +34,7 @@ objs = $(boot_dir)/head.o \
 	$(driver_pci_dir)/pci.o \
 	$(driver_blk_dir)/block_driver.o \
 	$(driver_blk_dir)/ata/ata_hdd.o \
+	$(ext2_fs_dir)/ext2_rw_test.o \
 	$(klib_dir)/printk.o \
 	$(klib_dir)/string.o \
 	$(klib_dir)/kmalloc.o \
@@ -46,6 +50,7 @@ build:
 	cd $(kern_dir) && make
 	cd $(driver_pci_dir) && make
 	cd $(driver_blk_dir) && make
+	cd $(ext2_fs_dir) && make
 	cd $(klib_dir) && make
 
 install: loop_dev_install
@@ -76,6 +81,7 @@ clean:
 	cd $(kern_mm_dir) && make clean
 	cd $(driver_pci_dir) && make clean
 	cd $(driver_blk_dir) && make clean
+	cd $(ext2_fs_dir) && make clean
 	cd $(klib_dir) && make clean
 	-rm -f $(kernel) *.log
 	find . -name '*~' -exec rm {} \; 

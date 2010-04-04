@@ -1,9 +1,7 @@
 #!/bin/bash
 
 create_cmd=""
-
-have_qemu=0
-
+target=$1
 test_img="test/img/hda.img"
 
 function remove_old_file() 
@@ -15,13 +13,17 @@ function remove_old_file()
 }
 
 
-if [ "$1" = "kvm" ]; then
+if [ "$target" = "" ]; then
+    target="bochs"
+fi
+
+if [ "$target" = "kvm" ]; then
     create_cmd="/usr/bin/kvm-img"
     cmd="$create_cmd create -f qcow2 $test_img 10M"
-elif [ "$1" = "qemu" ]; then
+elif [ "$target" = "qemu" ]; then
     create_cmd="/usr/bin/qemu-img"
     cmd="$create_cmd create -f qcow2 $test_img 10M"
-elif [ "$1" = "bochs" ]; then
+elif [ "$target" = "bochs" ]; then
     create_cmd="/usr/bin/bximage"
     cmd="$create_cmd -q -hd -size=10 -mode=flat $test_img"
 else
@@ -34,7 +36,7 @@ remove_old_file
 echo $cmd
 $cmd
 
-/sbin/mkfs.ext2 $test_img
+/sbin/mke2fs -q $test_img
 
 echo "Done."
 

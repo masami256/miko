@@ -77,6 +77,7 @@ static bool initialize_ata(void);
 static bool sector_rw_common(u_int8_t cmd, int device, u_int32_t sector);
 static inline void finish_sector_rw(void);
 
+#ifdef USE_SECTOR_RW_TEST
 static void sector_rw_test(void)
 {
 	sector_t buf[256];
@@ -96,6 +97,7 @@ static void sector_rw_test(void)
 
 	read_sector(0, 222, buf, sizeof(buf) / sizeof(buf[0]));
 }
+#endif
 
 /**
  * Open ATA disk.
@@ -108,8 +110,6 @@ static int open_ATA_disk(void)
 	ret = initialize_ata();
 	if (!ret)
 		return -1;
-
-	sector_rw_test();
 
 	return 0;
 }
