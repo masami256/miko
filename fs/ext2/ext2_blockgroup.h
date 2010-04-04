@@ -1,7 +1,7 @@
 #ifndef __MIKOOS_BLOCKGROUP_H
 #define __MIKOOS_BLOCKGROUP_H 1
 
-#inlude <sys/types.h>
+#include <sys/types.h>
 
 // Block group descriptor table.
 struct ext2_blockgroup {
