@@ -2,7 +2,8 @@ include ../Makefile.inc
 
 CFLAGS += -I../include -I.
 
-objs = cmain.o
+objs = cmain.o \
+	mount_root.o
 
 all: $(objs)
 

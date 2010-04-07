@@ -24,6 +24,7 @@ klib_dir = klibs
 
 objs = $(boot_dir)/head.o \
 	$(init_dir)/cmain.o \
+	$(init_dir)/mount_root.o \
 	$(kern_dir)/gdt.o \
 	$(kern_dir)/interrupt_handler.o \
 	$(kern_dir)/interrupt.o \

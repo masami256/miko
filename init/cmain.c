@@ -10,14 +10,17 @@
 #include <mikoOS/timer.h>
 #include <mikoOS/abort.h>
 #include <mikoOS/lock.h>
-
 #include <mikoOS/gdt.h>
 #include <mikoOS/process.h>
+
+#include "mount_root.h"
 
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
 // cmain() is called from head.S.
 extern void cmain(unsigned long magic, unsigned long addr);
+
+static int mount_root(void);
 
 static void show_startup_message(void)
 {
@@ -76,6 +79,9 @@ void cmain(unsigned long magic, unsigned long addr)
 	// setup tss for processes.
 	setup_tss();
 
+	// mount root file system.
+	mount_root_fs();
+
 	sti();
 
 	show_startup_message();
@@ -83,4 +89,3 @@ void cmain(unsigned long magic, unsigned long addr)
 	while (1);
 
 }
-
