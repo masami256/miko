@@ -11,6 +11,8 @@ boot_dir = boot
 kern_dir = kernel
 kern_mm_dir = $(kern_dir)/mm
 
+init_dir = init
+
 drivers_dir = drivers
 driver_pci_dir = $(drivers_dir)/pci
 driver_blk_dir = $(drivers_dir)/block
@@ -21,7 +23,7 @@ ext2_fs_dir = $(fs_dir)/ext2
 klib_dir = klibs
 
 objs = $(boot_dir)/head.o \
-	$(kern_dir)/cmain.o \
+	$(init_dir)/cmain.o \
 	$(kern_dir)/gdt.o \
 	$(kern_dir)/interrupt_handler.o \
 	$(kern_dir)/interrupt.o \
@@ -46,6 +48,7 @@ all: build $(objs)
 
 build:
 	cd $(boot_dir) && make
+	cd $(init_dir) && make
 	cd $(kern_mm_dir) && make
 	cd $(kern_dir) && make
 	cd $(driver_pci_dir) && make
@@ -77,6 +80,7 @@ create_test_data:
 
 clean:
 	cd $(boot_dir) && make clean 
+	cd $(init_dir) && make clean
 	cd $(kern_dir) && make clean
 	cd $(kern_mm_dir) && make clean
 	cd $(driver_pci_dir) && make clean

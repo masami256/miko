@@ -6,8 +6,8 @@
 #include <mikoOS/lock.h>
 #include <mikoOS/timer.h>
 #include <mikoOS/mm.h>
-#include "process.h"
-#include "gdt.h"
+#include <mikoOS/gdt.h>
+#include <mikoOS/process.h>
 #include "interrupt_handler.h"
 
 /////////////////////////////////////////////////

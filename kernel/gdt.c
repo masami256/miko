@@ -1,6 +1,6 @@
 #include <mikoOS/kernel.h>
-#include "gdt.h"
-#include "process.h"
+#include <mikoOS/gdt.h>
+#include <mikoOS/process.h>
 
 static struct descriptor_table gdtr;
 static struct segment_descriptor gdt[GDT_TABLE_NUM];

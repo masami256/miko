@@ -11,9 +11,8 @@
 #include <mikoOS/abort.h>
 #include <mikoOS/lock.h>
 
-#include "gdt.h"
-
-#include "process.h"
+#include <mikoOS/gdt.h>
+#include <mikoOS/process.h>
 
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 

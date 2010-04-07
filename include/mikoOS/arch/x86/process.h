@@ -1,5 +1,5 @@
-#ifndef __MIKOOS_PROCESS_H
-#define __MIKOOS_PROCESS_H 1
+#ifndef __MIKOOS_X86_PROCESS_H
+#define __MIKOOS_X86_PROCESS_H 1
 #include <sys/types.h>
 
 #define PROCESS_STACK_SIZE 4096
@@ -48,4 +48,4 @@ struct tss_struct {
 void schedule(void);
 int setup_tss(void);
 
-#endif // __MIKOOS_PROCESS_H
+#endif // __MIKOOS_X86_PROCESS_H

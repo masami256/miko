@@ -1,5 +1,5 @@
-#ifndef SEGMENT_H
-#define SEGMENT_H 1
+#ifndef __MIKOOS_X86_GDT_H
+#define __MIKOOS_X86_GDT_H 1
 
 #include <mikoOS/arch/x86/descriptor_common.h>
 
@@ -16,4 +16,4 @@ void set_ldt_values(u_int32_t index, u_int32_t base,
 
 int search_unused_gdt_index(void);
 
-#endif // SEGMENT_H
+#endif // __MIKOOS_X86_GDT_H
