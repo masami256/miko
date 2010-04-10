@@ -17,8 +17,9 @@ void memset(void *addr, int c, size_t size)
  */
 int strcmp(const char *s1, const char *s2)
 {
-	while (*s1++ == *s2++)
-		; // nothing to do.
-
-	return s1 - s2;
+	for ( ; *s1 == *s2; s1++, s2++) 
+		if (*s1 == '\0')
+			return 0;
+	
+	return *s1 - *s2;
 }
