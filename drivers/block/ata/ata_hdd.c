@@ -675,8 +675,6 @@ bool init_ata_disk_driver(void)
 	// register myself.
 	register_blk_driver(&ata_dev);
 
-	open_ATA_disk();
-
 	return true;
 }
 
