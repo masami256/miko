@@ -1,6 +1,6 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/printk.h>
-#include <mikoOS/fs.h>
+#include <mikoOS/vfs.h>
 #include <mikoOS/string.h>
 
 static struct file_system_type fs_type_head = {

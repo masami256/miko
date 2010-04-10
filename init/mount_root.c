@@ -1,7 +1,7 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/printk.h>
 #include <mikoOS/block_driver.h>
-#include <mikoOS/fs.h>
+#include <mikoOS/vfs.h>
 
 #include "mount_root.h"
 

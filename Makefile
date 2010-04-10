@@ -56,6 +56,7 @@ build:
 	cd $(kern_dir) && make
 	cd $(driver_pci_dir) && make
 	cd $(driver_blk_dir) && make
+	cd $(fs_dir) && make
 	cd $(ext2_fs_dir) && make
 	cd $(klib_dir) && make
 

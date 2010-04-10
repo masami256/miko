@@ -2,7 +2,7 @@
 #include <mikoOS/printk.h>
 #include <mikoOS/mm.h>
 #include <mikoOS/abort.h>
-#include <mikoOS/fs.h>
+#include <mikoOS/vfs.h>
 #include <mikoOS/string.h>
 
 #include "ext2fs.h"
