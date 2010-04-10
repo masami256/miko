@@ -21,7 +21,8 @@ int mount_root_fs(void)
 	}
 
 	ext2_fs_init();
-	show_all_registered_file_systems();
+	
+	read_super_block("ext2");
 
 	printk("rootfs mount finished\n");
 	return 0;
