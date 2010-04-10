@@ -20,8 +20,6 @@
 // cmain() is called from head.S.
 extern void cmain(unsigned long magic, unsigned long addr);
 
-static int mount_root(void);
-
 static void show_startup_message(void)
 {
 	printk("Welcome to mikoOS!\n");
@@ -73,7 +71,6 @@ void cmain(unsigned long magic, unsigned long addr)
 
 	// Init ATA device.
 	init_ata_disk_driver();
-
 	show_all_registered_driver();
 
 	// setup tss for processes.
