@@ -2,11 +2,23 @@ include ../Makefile.inc
 
 CFLAGS += -I../include -I.
 
-all:
-	cd ext2 && make
+ext2_dir = ext2
+
+objs = vfs.o \
+	$(ext2_dir)/ext2_superblock.o \
+	$(ext2_dir)/ext2_rw_test.o
+
+all: $(objs)
+	cd $(ext2_dir) && make
+
+.c.o:
+	$(CC) $(CFLAGS) $< -c
+
+.S.o:
+	$(CC) $(CFLAGS) $< -c
 
 clean:
-	cd ext2 && make clean
+	cd $(ext2_dir) && make clean
 	-rm *.o  *~
 
 .PHONY: clean all

@@ -2,7 +2,8 @@ include ../../Makefile.inc
 
 CFLAGS += -I../../include -I.
 
-objs = ext2_rw_test.o
+objs = ext2_superblock.o \
+	ext2_rw_test.o
 
 all: $(objs)
 	

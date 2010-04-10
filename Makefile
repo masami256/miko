@@ -37,6 +37,8 @@ objs = $(boot_dir)/head.o \
 	$(driver_pci_dir)/pci.o \
 	$(driver_blk_dir)/block_driver.o \
 	$(driver_blk_dir)/ata/ata_hdd.o \
+	$(fs_dir)/vfs.o \
+	$(ext2_fs_dir)/ext2_superblock.o \
 	$(ext2_fs_dir)/ext2_rw_test.o \
 	$(klib_dir)/printk.o \
 	$(klib_dir)/string.o \
@@ -86,6 +88,7 @@ clean:
 	cd $(kern_mm_dir) && make clean
 	cd $(driver_pci_dir) && make clean
 	cd $(driver_blk_dir) && make clean
+	cd $(fs) && make clean
 	cd $(ext2_fs_dir) && make clean
 	cd $(klib_dir) && make clean
 	-rm -f $(kernel) *.log

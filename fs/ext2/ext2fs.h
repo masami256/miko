@@ -131,4 +131,6 @@ struct ext2_superblock {
 	u_int8_t reserved[760];
 };
 
+void ext2_fs_init(void);
+
 #endif // __MIKOOS_EXT2FS_H

@@ -1,10 +1,31 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/printk.h>
 #include <mikoOS/mm.h>
+#include <mikoOS/abort.h>
+#include <mikoOS/fs.h>
+#include <mikoOS/string.h>
+
 #include "ext2fs.h"
 
-int ext2_read_super_block_from_disk(void)
+static struct ext2_superblock ext2_sb;
+
+static int ext2_get_sb(const char *fs_name);
+
+static struct file_system_type ext2_fs_type = {
+	.name = "ext2",
+	.get_sb = &ext2_get_sb,
+};
+
+static int ext2_get_sb(const char *fs_name)
 {
+	printk("%s\n", __FUNCTION__);
 	return 0;
 }
 
+/**
+ * Register myself to the kernel.
+ */
+void ext2_fs_init(void)
+{
+	register_file_system(&ext2_fs_type);
+}

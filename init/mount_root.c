@@ -1,6 +1,7 @@
 #include <mikoOS/kernel.h>
 #include <mikoOS/printk.h>
 #include <mikoOS/block_driver.h>
+#include <mikoOS/fs.h>
 
 #include "mount_root.h"
 
@@ -18,6 +19,9 @@ int mount_root_fs(void)
 		printk("Couldn't open disk\n");
 		return -1;
 	}
+
+	ext2_fs_init();
+	show_all_registered_file_systems();
 
 	printk("rootfs mount finished\n");
 	return 0;
