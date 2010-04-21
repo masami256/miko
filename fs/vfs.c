@@ -18,6 +18,11 @@ static struct vfs_mount root_fs;
 /////////////////////////////////////////////////
 // private functions
 /////////////////////////////////////////////////
+/**
+ * Get vfs_mount structure by mount point name.
+ * @param mount_point is mount point name.
+ * @return NULL if there is no "mount_point" in mount_points_head.
+ */
 static struct vfs_mount *get_mount_point(const char *mount_point)
 {
 	struct vfs_mount *p;
@@ -30,6 +35,10 @@ static struct vfs_mount *get_mount_point(const char *mount_point)
 	return NULL;
 }
 
+/**
+ * To find file system name in file system type list.
+ * @return NULL if there is no "mount_point" in fs type list.
+ */
 static struct file_system_type *find_file_system_type(const char *name)
 {
 	struct file_system_type *p;
@@ -44,8 +53,12 @@ static struct file_system_type *find_file_system_type(const char *name)
 /////////////////////////////////////////////////
 // public functions
 /////////////////////////////////////////////////
-
-int set_mount_point(const char *name, struct blk_device_drivers *driver) 
+/**
+ * To make releashionship between mount point and device driver.
+ * @param name is mount point.
+ * @param driver is the driver for that device.
+ */ 
+void set_mount_point(const char *name, struct blk_device_drivers *driver) 
 {
 	root_fs.m_point = name;
 	root_fs.blk_op = driver->op;
@@ -54,6 +67,10 @@ int set_mount_point(const char *name, struct blk_device_drivers *driver)
 	mount_points_head.next = &root_fs;
 }
 
+/**
+ * Regist file system type to the file system type list.
+ * @param fs_type is file system name.
+ */
 int register_file_system(struct file_system_type *fs_type)
 {
 	fs_type->next = fs_type_head.next;
@@ -70,7 +87,12 @@ void show_all_registered_file_systems(void)
 		printk("fs type = %s\n", p->name);
 }
 
-
+/**
+ * Read super block from required mount point. 
+ * @param fs_name is file system name. such as ext2.
+ * @param mount_point is mount point.
+ * @return 0: succeeded. negative value: something wrong.
+ */
 int read_super_block(const char *fs_name, const char *mount_point)
 {
 	struct file_system_type *p;
