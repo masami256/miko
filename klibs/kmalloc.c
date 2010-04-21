@@ -33,7 +33,7 @@ int init_kmalloc_area(void)
 {
 	unsigned long n;
 
-	kmalloc_area = (char *) get_free_pages(2);
+	kmalloc_area = (char *) get_free_pages(32);
 	if (!kmalloc_area)
 		return -1;
 
