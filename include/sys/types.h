@@ -20,4 +20,13 @@ typedef unsigned long long u_int64_t;
 typedef int                  ssize_t;
 typedef u_int32_t             size_t;
 
+#define SECTOR_SIZE 256
+#define BLOCK_SIZE (SECTOR_SIZE * 2)
+typedef u_int16_t sector_t;
+typedef union block_data_ {
+	sector_t sector[SECTOR_SIZE];
+	char data[BLOCK_SIZE];
+} block_data_t;
+
+
 #endif // __MIKOOS_TYPES_H

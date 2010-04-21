@@ -71,3 +71,7 @@ struct blk_device_drivers *get_blk_driver(const char *name)
 	return NULL;
 }
 
+int read_blocks(block_data_t *out, int count)
+{
+	return 0;
+}

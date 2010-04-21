@@ -21,4 +21,7 @@ void remove_blk_driver(struct blk_dev_driver_operations *op);
 void show_all_registered_driver(void);
 struct blk_device_drivers *get_blk_driver(const char *name);
 
+#define read_one_block(out) read_blocks((out), 1)
+int read_blocks(block_data_t *out, int count);
+
 #endif // __MIKOOS_BLOCK_DRIVER_H

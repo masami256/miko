@@ -18,7 +18,14 @@ static struct file_system_type ext2_fs_type = {
 
 static int ext2_get_sb(void)
 {
+	block_data_t sblock;
+	int ret;
+
 	printk("%s\n", __FUNCTION__);
+
+	ret = read_one_block(&sblock);
+
+
 	return 0;
 }
 

@@ -2,10 +2,10 @@
 #include <mikoOS/printk.h>
 #include <mikoOS/block_driver.h>
 #include <mikoOS/vfs.h>
-
 #include "mount_root.h"
 
 static struct blk_device_drivers *driver;
+
 
 int mount_root_fs(void)
 {
@@ -20,9 +20,11 @@ int mount_root_fs(void)
 		return -1;
 	}
 
+	set_mount_point("/", driver);
+
 	ext2_fs_init();
 	
-	read_super_block("ext2");
+	read_super_block("ext2", "/");
 
 	printk("rootfs mount finished\n");
 	return 0;
