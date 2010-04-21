@@ -76,9 +76,9 @@ bochs_test:
 qemu_test:
 	kvm -boot a -fda test/img/floppy.img -hda test/img/hda.img&
 
-
 create_test_data:
 	sudo mount test/img/hda.img /media/test -o loop
+	mkdir -p /media/test/dir_a/dir_b /media/test/dir_A/dir_B
 	echo "ABCDE" > /media/test/test.txt
 	sudo umount /media/test 
 
