@@ -27,10 +27,9 @@ static struct vfs_mount *get_mount_point(const char *mount_point)
 {
 	struct vfs_mount *p;
 
-	for (p = mount_points_head.next; p != &mount_points_head; p = mount_points_head.next) {
+	for (p = mount_points_head.next; p != &mount_points_head; p = p->next)
 		if (!strcmp(p->m_point, mount_point))
 			return p;
-	}
 
 	return NULL;
 }
