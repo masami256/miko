@@ -29,8 +29,8 @@ static u_int32_t max_logical_sector_num = 0;
 // driver operations.
 static int open_ATA_disk(void);
 static int close_ATA_disk(void);
-static bool read_sector(int device, u_int32_t sector, 
-			sector_t *buf,	size_t buf_size);
+static int read_sector(int device, u_int32_t sector, 
+		       sector_t *buf,	size_t buf_size);
 static bool write_sector(int device, u_int32_t sector, 
 			sector_t *buf,	size_t buf_size);
 
@@ -43,6 +43,7 @@ struct blk_dev_driver_operations ata_dev = {
 	.name = "ATA disk",
 	.open = &open_ATA_disk,
 	.close = &close_ATA_disk,
+	.read = &read_sector,
 };
 
 static struct pci_device *this_device;
@@ -158,8 +159,9 @@ bool write_sector(int device, u_int32_t sector,
  * @param sector number.
  * @param data to store..
  * @param data size. it should be 256.
+ * @return  0 if process is success. if something wrong it returns negative value
  */
-bool read_sector(int device, u_int32_t sector, 
+int read_sector(int device, u_int32_t sector, 
 		 sector_t *buf, size_t buf_size)
 {
 	bool ret;
@@ -167,14 +169,14 @@ bool read_sector(int device, u_int32_t sector,
 
 	ret = sector_rw_common(PIO_SECTOR_READ_CMD, device, sector);
 	if (!ret)
-		return ret;
+		return -1;
 
 	for (i = 0; i < buf_size; i++) 
 		buf[i] = inw(DATA_REGISTER);
 
 	finish_sector_rw();
 
-	return true;
+	return 0;
 
 }
 

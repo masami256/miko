@@ -6,16 +6,16 @@
 
 #include <mikoOS/block_driver.h>
 
-struct file_system_type {
-	const char *name;
-	int (*get_sb)(void);
-	struct file_system_type *next;
-};
-
 struct vfs_mount {
 	const char *m_point;
-	const struct blk_dev_driver_operations *blk_op;
+	const struct blk_device_drivers *driver;
 	struct vfs_mount *next;
+};
+
+struct file_system_type {
+	const char *name;
+	int (*get_sb)(struct vfs_mount *vmount);
+	struct file_system_type *next;
 };
 
 int register_file_system(struct file_system_type *fs_type);

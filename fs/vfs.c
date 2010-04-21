@@ -60,7 +60,7 @@ static struct file_system_type *find_file_system_type(const char *name)
 void set_mount_point(const char *name, struct blk_device_drivers *driver) 
 {
 	root_fs.m_point = name;
-	root_fs.blk_op = driver->op;
+	root_fs.driver = driver;
 
 	root_fs.next = mount_points_head.next;
 	mount_points_head.next = &root_fs;
@@ -95,7 +95,7 @@ void show_all_registered_file_systems(void)
 int read_super_block(const char *fs_name, const char *mount_point)
 {
 	struct file_system_type *p;
-	struct vfs_mount *mnt;
+	struct vfs_mount *point;
 
 	p = find_file_system_type(fs_name);
 	if (!p) {
@@ -103,13 +103,13 @@ int read_super_block(const char *fs_name, const char *mount_point)
 		return -1;
 	}
 
-	mnt = get_mount_point(mount_point);
-	if (!mnt) {
+	point = get_mount_point(mount_point);
+	if (!point) {
 		printk("there is no mount point for [%s]\n", mount_point);
 		return -1;
 	}
 
-	printk("mount point is [%s]\n", mnt->m_point);
+	printk("mount point is [%s]\n", point->m_point);
 
-	return p->get_sb();
+	return p->get_sb(point);
 }

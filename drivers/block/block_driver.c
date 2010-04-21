@@ -71,7 +71,14 @@ struct blk_device_drivers *get_blk_driver(const char *name)
 	return NULL;
 }
 
-int read_blocks(block_data_t *out, int count)
+int read_blocks(const struct blk_device_drivers *blk_driver, block_data_t *out, int count)
 {
+	int i;
+	int sector = 0;
+
+	for (i = 0; i < count; i++) {
+		blk_driver->op->read(0, 222, &out->sector, 256);
+	}
+
 	return 0;
 }
