@@ -21,5 +21,6 @@ struct vfs_mount {
 int register_file_system(struct file_system_type *fs_type);
 void show_all_registered_file_systems(void);
 int read_super_block(const char *fs_name, const char *mount_point);
+void set_mount_point(const char *name, struct blk_device_drivers *driver);
 
 #endif // __MIKOOS_VFS_H
