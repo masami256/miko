@@ -31,7 +31,7 @@ static int open_ATA_disk(void);
 static int close_ATA_disk(void);
 static int read_sector(int device, u_int32_t sector, 
 		       sector_t *buf,	size_t buf_size);
-static bool write_sector(int device, u_int32_t sector, 
+static int write_sector(int device, u_int32_t sector, 
 			sector_t *buf,	size_t buf_size);
 
 // For find IDE interface.
@@ -44,6 +44,7 @@ struct blk_dev_driver_operations ata_dev = {
 	.open = &open_ATA_disk,
 	.close = &close_ATA_disk,
 	.read = &read_sector,
+	.write = &write_sector,
 };
 
 static struct pci_device *this_device;
@@ -134,8 +135,9 @@ static int close_ATA_disk(void)
  * @param sector number.
  * @param data to write.
  * @param data size. it should be 256.
+ * @return negative if fail to write data.
  */
-bool write_sector(int device, u_int32_t sector, 
+int write_sector(int device, u_int32_t sector, 
 		  sector_t *buf, size_t buf_size)
 {
 	bool ret;
@@ -143,14 +145,14 @@ bool write_sector(int device, u_int32_t sector,
 
 	ret = sector_rw_common(PIO_SECTOR_WRITE_CMD, device, sector);
 	if (!ret)
-		return ret;
+		return -1;
 
 	for (i = 0; i < buf_size; i++) 
 		outw(DATA_REGISTER, buf[i]);
 
 	finish_sector_rw();
 
-	return true;
+	return 0;
 }
 
 /**
