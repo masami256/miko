@@ -21,8 +21,6 @@ int mount_root_fs(void)
 	}
 
 	set_mount_point("/", driver);
-
-	ext2_fs_init();
 	
 	read_super_block("ext2", "/");
 
