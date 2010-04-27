@@ -3,6 +3,8 @@
 
 #include <sys/types.h>
 
+#define SUPER_BLOCK_SIZE 1024
+
 // Reference.
 // http://www.nongnu.org/ext2-doc/ext2.html
 // http://www.freebsd.org/cgi/cvsweb.cgi/src/sys/fs/ext2fs/ext2fs.h?rev=1.1
@@ -83,8 +85,9 @@ struct ext2_superblock {
 	u_int32_t s_free_blocks_count;
 	u_int32_t s_free_inodes_count;
 	u_int32_t s_first_data_block;
-	u_int32_t s_log_block_size;
+	u_int32_t s_log_block_size; // block size = 1024 * (2^s_log_block_size).
 	u_int32_t s_log_frag_size;
+	u_int32_t s_blocks_per_group;
 	u_int32_t s_frags_per_group;
 	u_int32_t s_inodes_per_group;
 	u_int32_t s_mtime;
@@ -130,6 +133,10 @@ struct ext2_superblock {
 	u_int32_t s_first_meta_bg;
 	u_int8_t reserved[760];
 };
+
+#define MIN_BLOCK_SIZE 1024
+#define get_block_size(sb) (MIN_BLOCK_SIZE << (sb).s_log_block_size)
+#define get_fragment_size(sb) (MIN_BLOCK_SIZE << (sb).s_log_frag_size)
 
 void ext2_fs_init(void);
 

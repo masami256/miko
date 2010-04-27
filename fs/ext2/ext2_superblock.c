@@ -28,7 +28,7 @@ static int ext2_get_sb(struct vfs_mount *vmount)
 	{
 		int i;
 		for (i = 0; i < 32; i++)
-			printk("0x%x ", sblock.data[i]);
+			printk("0x%x ", sblock.data[i] & 0xff);
 	}
 	return 0;
 }
