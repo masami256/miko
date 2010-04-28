@@ -20,7 +20,7 @@ struct ext2_dentry {
 	u_int16_t rec_len;
 	u_int8_t name_len;
 	u_int8_t file_type;
-	char *name;
+	char name[0];
 };
 
 // hash versions.
