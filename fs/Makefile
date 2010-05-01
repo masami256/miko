@@ -5,10 +5,7 @@ CFLAGS += -I../include -I.
 ext2_dir = ext2
 minix_dir = minix
 
-objs = vfs.o \
-	$(ext2_dir)/ext2_superblock.o \
-	$(minix_dir)/minixfs.o
-
+objs = vfs.o
 
 all: $(objs)
 	cd $(ext2_dir) && make
