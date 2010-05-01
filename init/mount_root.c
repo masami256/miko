@@ -22,7 +22,7 @@ int mount_root_fs(void)
 
 	set_mount_point("/", driver);
 	
-	read_super_block("ext2", "/");
+	read_super_block("minix", "/");
 
 	printk("rootfs mount finished\n");
 	return 0;

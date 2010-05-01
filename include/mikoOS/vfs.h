@@ -2,7 +2,6 @@
 #define __MIKOOS_VFS_H 1
 
 #include <mikoOS/kernel.h>
-#include <mikoOS/fs/ext2.h>
 
 #include <mikoOS/block_driver.h>
 

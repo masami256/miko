@@ -19,6 +19,7 @@ driver_blk_dir = $(drivers_dir)/block
 
 fs_dir = fs
 ext2_fs_dir = $(fs_dir)/ext2
+minix_fs_dir = $(fs_dir)/minix
 
 klib_dir = klibs
 
@@ -39,7 +40,7 @@ objs = $(boot_dir)/head.o \
 	$(driver_blk_dir)/ata/ata_hdd.o \
 	$(fs_dir)/vfs.o \
 	$(ext2_fs_dir)/ext2_superblock.o \
-	$(ext2_fs_dir)/ext2_rw_test.o \
+	$(minix_fs_dir)/minixfs.o \
 	$(klib_dir)/printk.o \
 	$(klib_dir)/string.o \
 	$(klib_dir)/kmalloc.o \
@@ -58,6 +59,7 @@ build:
 	cd $(driver_blk_dir) && make
 	cd $(fs_dir) && make
 	cd $(ext2_fs_dir) && make
+	cd $(minix_fs_dir) && make
 	cd $(klib_dir) && make
 
 install: loop_dev_install
@@ -79,6 +81,7 @@ qemu_test:
 create_test_data:
 	sudo mount test/img/hda.img /media/test -o loop
 	mkdir -p /media/test/dir_a/dir_b /media/test/dir_A/dir_B
+	echo "foobar" > /media/test/dir_a/dir_b/foobar.txt 
 	echo "ABCDE" > /media/test/test.txt
 	sudo umount /media/test 
 
@@ -91,6 +94,7 @@ clean:
 	cd $(driver_blk_dir) && make clean
 	cd $(fs) && make clean
 	cd $(ext2_fs_dir) && make clean
+	cd $(minix_fs_dir) && make
 	cd $(klib_dir) && make clean
 	-rm -f $(kernel) *.log
 	find . -name '*~' -exec rm {} \; 

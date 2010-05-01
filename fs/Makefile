@@ -3,14 +3,16 @@ include ../Makefile.inc
 CFLAGS += -I../include -I.
 
 ext2_dir = ext2
+minix_dir = minix
 
 objs = vfs.o \
 	$(ext2_dir)/ext2_superblock.o \
-	$(ext2_dir)/ext2_rw_test.o
+	$(minix_dir)/minixfs.o
+
 
 all: $(objs)
 	cd $(ext2_dir) && make
-
+	cd $(minix_dir) && make
 .c.o:
 	$(CC) $(CFLAGS) $< -c
 
@@ -19,6 +21,7 @@ all: $(objs)
 
 clean:
 	cd $(ext2_dir) && make clean
+	cd $(minix_dir) && make clean
 	-rm *.o  *~
 
 .PHONY: clean all

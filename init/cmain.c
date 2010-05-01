@@ -13,7 +13,7 @@
 #include <mikoOS/gdt.h>
 #include <mikoOS/process.h>
 #include <mikoOS/vfs.h>
-
+#include <mikoOS/fs/ext2.h>
 #include "mount_root.h"
 
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
@@ -78,7 +78,7 @@ void cmain(unsigned long magic, unsigned long addr)
 	setup_tss();
 
 	// initialize file system.
-	ext2_fs_init();
+	minix_fs_init();
 
 	// mount root file system.
 	mount_root_fs();

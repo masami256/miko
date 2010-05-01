@@ -36,7 +36,7 @@ remove_old_file
 echo $cmd
 $cmd
 
-/sbin/mke2fs -q $test_img
+/sbin/mkfs.minix -V  $test_img
 
 echo "Done."
 
