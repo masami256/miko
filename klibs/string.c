@@ -6,10 +6,28 @@
 void memset(void *addr, int c, size_t size)
 {
 	size_t i;
-	char *p = addr;
+	register char *p = addr;
 
 	for (i = 0; i < size; i++)
 		p[i] = c;
+}
+
+/**
+ * It works as memcpy(3).
+ */
+void *memcpy(void *dest, const void *src, size_t n)
+{
+        size_t i;
+        register unsigned char *d;
+	register const unsigned char *s;
+
+        d = dest;
+	s = src;
+
+        for (i = 0; i < n; i++)
+                d[i] = s[i];
+
+        return dest;
 }
 
 /**
@@ -23,3 +41,22 @@ int strcmp(const char *s1, const char *s2)
 	
 	return *s1 - *s2;
 }
+
+/**
+ * It works as strncmp(3).
+ */
+int strncmp(const char *s1, const char *s2, size_t n)
+{
+	while (n) {
+		if (*s1 != *s2)
+			return *s1 - *s2;
+
+		if (*s1 == '\0')
+                        break;
+		n--;
+		s1++;
+		s2++;
+	}
+        return 0;
+}
+
