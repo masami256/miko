@@ -20,15 +20,42 @@ static int read_dentry(struct vfs_mount *vmount, struct minix_dentry *dentry, un
 static int read_inode(struct vfs_mount *vmount, u_int16_t inode_num, struct minix_inode *inode, unsigned long addr);
 static int count_delimita_length(const char *str, char c);
 static u_int16_t find_file(struct vfs_mount *vmount, struct minix_superblock *sb, unsigned long address, const char *fname);
+static ssize_t read_file(struct vfs_mount *vmount, struct minix_superblock *sb, 
+			 const char *fname, char *buf, size_t num);
+
+static ssize_t minix_read(struct vfs_mount *vmount, const char *fname, char *buf, size_t num);
+
+static struct file_operations minix_file_operations = {
+	.read = &minix_read,
+};
+
+static struct super_operations minix_super_operations = {
+	.get_sb = &minix_get_sb,
+};
 
 static struct file_system_type minix_fs_type = {
 	.name = "minix",
-	.get_sb = &minix_get_sb,
+	.s_op = &minix_super_operations,
+	.f_op = &minix_file_operations,
 };
 
 /////////////////////////////////////////////////
 // private functions
 /////////////////////////////////////////////////
+/**
+ * Interface of read file and store data function.
+ * @param vfs mount point.
+ * @param vfs structure.
+ * @param file name.
+ * @param output buffer.
+ * @param maximum read bytes
+ * @result read bytes. 
+ */
+static ssize_t minix_read(struct vfs_mount *vmount, const char *fname, char *buf, size_t num)
+{
+	return read_file(vmount, &minix_sb, fname, buf, num);
+}
+
 /**
  * Get file type from inode structure.
  * @param inode
@@ -182,13 +209,22 @@ static u_int16_t find_file(struct vfs_mount *vmount, struct minix_superblock *sb
 
 }
 
-static int read_file(struct vfs_mount *vmount, struct minix_superblock *sb, const char *fname)
+/**
+ * Read file and store data to buf.
+ * @param vfs mount point.
+ * @param super block.
+ * @param file name.
+ * @param output buffer.
+ * @param maximum read bytes
+ * @result read bytes. 
+ */
+static ssize_t read_file(struct vfs_mount *vmount, struct minix_superblock *sb, 
+			 const char *fname, char *buf, size_t num)
 {
 	u_int16_t ino;
 	struct minix_inode inode;
 	unsigned long inode_tbl_bass = get_inode_table_address(*sb);
-	char *data;
-	int i, ret;
+	int ret;
 
 	ino = find_file(vmount, sb, get_first_data_zone(*sb), fname);
 	if (!ino) {
@@ -200,27 +236,18 @@ static int read_file(struct vfs_mount *vmount, struct minix_superblock *sb, cons
 	if (ret)
 		KERN_ABORT("read inode error\n");
 
-	printk("file %s: size is 0x%x\n", fname, inode.i_size);
-
 	ret = read_one_sector(vmount->driver, &sblock, get_data_zone(inode.i_zone[0]));
 	if (ret) {
 		printk("read sector error\n");
 		return ret;
 	}
 
-	data = kmalloc(inode.i_size);
-	if (!data)
-		KERN_ABORT("kmalloc failed\n");
+	if (num > inode.i_size)
+		num = inode.i_size;
 
-	memcpy(data, sblock.data, inode.i_size);
-	printk("file %s's data is %s", fname, data);
+	memcpy(buf, sblock.data, num);
 
-//	for (i = 0; i < inode.i_size; i++)
-//		printk("0x%x ", data[i]);
-	
-//	printk("\n");
-
-	return 0;
+	return inode.i_size;
 }
 
 /**
@@ -237,7 +264,6 @@ static int minix_get_sb(struct vfs_mount *vmount)
 	ret = read_one_sector(vmount->driver, &sblock, 0x400 / BLOCK_SIZE);
 	memcpy(&minix_sb, sblock.data, sizeof(minix_sb));
 #if 0
-	cls();
 	printk("Superblock info\n");
 	printk("s_ninodes: 0x%x\n", minix_sb.s_ninodes);
 	printk("s_nzones:  0x%x\n", minix_sb.s_nzones);
@@ -249,10 +275,6 @@ static int minix_get_sb(struct vfs_mount *vmount)
 	printk("s_magic: 0x%x\n", minix_sb.s_magic);
 	printk("s_pad: 0x%x\n", minix_sb.s_pad);
 	printk("s_zones: 0x%x\n", minix_sb.s_zones);
-#else
-	cls();
-	//ret = find_file(vmount, &minix_sb, get_first_data_zone(minix_sb), "/dir_a/dir_b/foobar.txt");
-	read_file(vmount, &minix_sb, "/dir_a/dir_b/foobar.txt");
 #endif
 	return 0;
 }

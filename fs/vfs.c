@@ -55,11 +55,13 @@ static struct file_system_type *find_file_system_type(const char *name)
 /**
  * To make releashionship between mount point and device driver.
  * @param name is mount point.
+ * @param fs_name is file system name for the mount point.
  * @param driver is the driver for that device.
  */ 
-void set_mount_point(const char *name, struct blk_device_drivers *driver) 
+void set_mount_point(const char *name, const char *fs_name, struct blk_device_drivers *driver) 
 {
 	root_fs.m_point = name;
+	root_fs.fs_name = fs_name;
 	root_fs.driver = driver;
 
 	root_fs.next = mount_points_head.next;
@@ -111,5 +113,35 @@ int read_super_block(const char *fs_name, const char *mount_point)
 
 	printk("mount point is [%s]\n", point->m_point);
 
-	return p->get_sb(point);
+	return p->s_op->get_sb(point);
+}
+
+ssize_t vfs_read(const char *fname, char *buf, size_t num)
+{
+	struct vfs_mount *mpoint;
+	struct file_system_type *fs_type;
+	char mount_point[2] = { 0 };
+
+	if (!fname)
+		return -1;
+
+	// relative path isn't supported yet.
+	if (fname[0] != '/')
+		return -2;
+
+	mount_point[0] = fname[0];
+	mpoint = get_mount_point(mount_point);
+	if (!mpoint) {
+		printk("there is no mount point for [%s]\n", mount_point);
+		return -1;
+	}
+
+	fs_type = find_file_system_type("minix");
+	if (!fs_type) {
+		printk("%s file system hasn't been registered yet\n", "minix");
+		return -1;
+	}
+	
+	return fs_type->f_op->read(mpoint, fname, buf, num);
+
 }

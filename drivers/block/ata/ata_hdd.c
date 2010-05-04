@@ -79,7 +79,7 @@ static bool initialize_ata(void);
 static bool sector_rw_common(u_int8_t cmd, int device, u_int32_t sector);
 static inline void finish_sector_rw(void);
 
-#define USE_SECTOR_RW_TEST 1
+//#define USE_SECTOR_RW_TEST
 #ifdef USE_SECTOR_RW_TEST
 static void sector_rw_test(void)
 {
