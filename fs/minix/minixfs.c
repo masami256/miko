@@ -5,6 +5,7 @@
 #include <mikoOS/vfs.h>
 #include <mikoOS/string.h>
 #include <mikoOS/fs/minixfs.h>
+#include <mikoOS/kmalloc.h>
 
 #include "minix_superblock.h"
 #include "minix_dentry.h"
@@ -15,8 +16,8 @@ static block_data_t sblock;
 
 static int minix_get_sb(struct vfs_mount *vmount);
 static int get_file_type(struct minix_inode *inode);
-static void read_dentry(struct vfs_mount *vmount, struct minix_dentry *dentry, unsigned long address, unsigned long offset);
-static void read_inode(struct vfs_mount *vmount, u_int16_t inode_num, struct minix_inode *inode, unsigned long addr);
+static int read_dentry(struct vfs_mount *vmount, struct minix_dentry *dentry, unsigned long address, unsigned long offset);
+static int read_inode(struct vfs_mount *vmount, u_int16_t inode_num, struct minix_inode *inode, unsigned long addr);
 static int count_delimita_length(const char *str, char c);
 static u_int16_t find_file(struct vfs_mount *vmount, struct minix_superblock *sb, unsigned long address, const char *fname);
 
@@ -57,18 +58,20 @@ static int get_file_type(struct minix_inode *inode)
  * @param inode number.
  * @param inode structure.
  * @param data zone.
+ * @param 0 is success.
  */
-static void read_inode(struct vfs_mount *vmount, u_int16_t inode_num, 
+static int read_inode(struct vfs_mount *vmount, u_int16_t inode_num, 
 		       struct minix_inode *inode, unsigned long addr)
 {
-//	block_data_t sblock;
 	int ret;
 
-	printk("%s\n", __FUNCTION__);
-
 	ret = read_one_sector(vmount->driver, &sblock, addr);
+	if (ret)
+		return -1;
 
 	memcpy(inode, sblock.data + ((inode_num - 1) * sizeof(*inode)), sizeof(*inode));
+	
+	return 0;
 }
 
 /**
@@ -76,24 +79,23 @@ static void read_inode(struct vfs_mount *vmount, u_int16_t inode_num,
  * @param dentry structure to store the result.
  * @param address of data zone.
  * @param offset from data zone.
+ * @param 0 is success.
  */ 
-static void read_dentry(struct vfs_mount *vmount, struct minix_dentry *dentry, 
+static int read_dentry(struct vfs_mount *vmount, struct minix_dentry *dentry, 
 			unsigned long address, unsigned long offset)
 {
 	int ret;
 
-	printk("%s\n", __FUNCTION__);
-	printk("address is 0x%x, offset is 0x%x\n", address, offset);
 	ret = read_one_sector(vmount->driver, &sblock, address);
-	if (ret) 
+	if (ret) {
 		printk("read sector error\n");
-
-	printk("read sector ok\n");
+		return ret;
+	}
 
 	// dentry->name is 15 bytes which reserved for '\0'.
 	memcpy(dentry, sblock.data + offset, sizeof(*dentry) - 1);
 
-	printk("read sector finish\n");
+	return 0;
 }
 
 /**
@@ -132,17 +134,22 @@ static u_int16_t find_file(struct vfs_mount *vmount, struct minix_superblock *sb
 	unsigned long inode_tbl_bass = get_inode_table_address(*sb);
 	const char *tmp;
 	u_int16_t ret = 0;
-
+	
+	int result;
 	int len = 0;
 	int ftype;
 	while (1) {
 		// read first entry.
-		read_dentry(vmount, &dentry, address, offset);
+		result = read_dentry(vmount, &dentry, address, offset);
+		if (result) 
+			KERN_ABORT("read hdd error\n");
 
 		if (dentry.inode == 0)
 			break;
 
-		read_inode(vmount, dentry.inode, &inode, inode_tbl_bass);
+		result = read_inode(vmount, dentry.inode, &inode, inode_tbl_bass);
+		if (result) 
+			KERN_ABORT("read hdd error\n");
 
 		tmp = fname;
 		if (tmp[0] == '/') 
@@ -175,6 +182,47 @@ static u_int16_t find_file(struct vfs_mount *vmount, struct minix_superblock *sb
 
 }
 
+static int read_file(struct vfs_mount *vmount, struct minix_superblock *sb, const char *fname)
+{
+	u_int16_t ino;
+	struct minix_inode inode;
+	unsigned long inode_tbl_bass = get_inode_table_address(*sb);
+	char *data;
+	int i, ret;
+
+	ino = find_file(vmount, sb, get_first_data_zone(*sb), fname);
+	if (!ino) {
+		printk("file %s not found\n", fname);
+		return 0;
+	}
+
+	ret = read_inode(vmount, ino, &inode, inode_tbl_bass);
+	if (ret)
+		KERN_ABORT("read inode error\n");
+
+	printk("file %s: size is 0x%x\n", fname, inode.i_size);
+
+	ret = read_one_sector(vmount->driver, &sblock, get_data_zone(inode.i_zone[0]));
+	if (ret) {
+		printk("read sector error\n");
+		return ret;
+	}
+
+	data = kmalloc(inode.i_size);
+	if (!data)
+		KERN_ABORT("kmalloc failed\n");
+
+	memcpy(data, sblock.data, inode.i_size);
+	printk("file %s's data is %s", fname, data);
+
+//	for (i = 0; i < inode.i_size; i++)
+//		printk("0x%x ", data[i]);
+	
+//	printk("\n");
+
+	return 0;
+}
+
 /**
  * Read minix file system's super block.
  * @param mount point.
@@ -182,7 +230,6 @@ static u_int16_t find_file(struct vfs_mount *vmount, struct minix_superblock *sb
  */ 
 static int minix_get_sb(struct vfs_mount *vmount)
 {
-#if 0
 	int ret;
 
 	printk("%s\n", __FUNCTION__);
@@ -204,10 +251,8 @@ static int minix_get_sb(struct vfs_mount *vmount)
 	printk("s_zones: 0x%x\n", minix_sb.s_zones);
 #else
 	cls();
-	printk("get_first_data_zone 0x%x(0x%x)\n", minix_sb.s_firstdatazone * ZONE_SIZE, get_first_data_zone(minix_sb));
-	ret = find_file(vmount, &minix_sb, get_first_data_zone(minix_sb), "/dir_a/dir_b/foobar.txt");
-	printk("file %s %s\n", "/dir_a/dir_b/foobar.txt", ret != 0 ? "Found" : "Not found");
-#endif
+	//ret = find_file(vmount, &minix_sb, get_first_data_zone(minix_sb), "/dir_a/dir_b/foobar.txt");
+	read_file(vmount, &minix_sb, "/dir_a/dir_b/foobar.txt");
 #endif
 	return 0;
 }

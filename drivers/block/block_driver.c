@@ -88,7 +88,7 @@ int blk_read_sector(const struct blk_device_drivers *blk_driver,  block_data_t *
 
 	for (i = 0; i < count; i++, sector++) {
 //		blk_driver->op->read(0, 2, out->sector, 256);
-		ret = blk_driver->op->read(0, sector, out->sector, BLOCK_SIZE);
+		ret = blk_driver->op->read(0, sector, out->sector, SECTOR_SIZE);
 		if (ret)
 			return ret;
 	}

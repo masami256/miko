@@ -85,7 +85,9 @@ static void sector_rw_test(void)
 {
 	block_data_t block;
 	bool ret;
-	int i;
+
+	printk("%s\n", __FUNCTION__);
+
 	ret = read_sector(0, 0x1b8, block.sector, SECTOR_SIZE);
 	if (ret)
 		printk("read error\n");
@@ -104,7 +106,9 @@ static void sector_rw_test(void)
 	printk("Data at 0x1ba is %s", block.data);
 
 }
-#endif
+#else
+static void sector_rw_test(void) {}
+#endif // USE_SECTOR_RW_TEST
 
 /**
  * Open ATA disk.
@@ -154,10 +158,10 @@ int write_sector(int device, u_int32_t sector,
 	if (!ret)
 		return -1;
 
+	finish_sector_rw();
+
 	for (i = 0; i < buf_size; i++) 
 		outw(DATA_REGISTER, buf[i]);
-
-	finish_sector_rw();
 
 	return 0;
 }
@@ -176,17 +180,21 @@ int read_sector(int device, u_int32_t sector,
 	bool ret;
 	size_t i;
 
+	if (buf_size != 256) {
+		printk("buf_size isn't 256\n");
+		while (1);
+	}
+		
 	ret = sector_rw_common(PIO_SECTOR_READ_CMD, device, sector);
 	if (!ret)
 		return -1;
 
-	for (i = 0; i < buf_size; i++) 
+	for (i = 0; i < buf_size; i++)
 		buf[i] = inw(DATA_REGISTER);
 
 	finish_sector_rw();
 
 	return 0;
-
 }
 
 
@@ -502,7 +510,6 @@ read_status_register_again:
 	}
 
 	return true;
-
 }
 
 /**
