@@ -1,6 +1,8 @@
 #ifndef __MIKOOS_BLOCK_DRIVER_H
 #define __MIKOOS_BLOCK_DRIVER_H 1
 
+#include <sys/types.h>
+
 struct blk_dev_driver_operations {
 	char name[32]; // driver name.
 	int (*open)(void);
@@ -22,7 +24,7 @@ void remove_blk_driver(struct blk_dev_driver_operations *op);
 void show_all_registered_driver(void);
 struct blk_device_drivers *get_blk_driver(const char *name);
 
-#define read_one_block(driver, out) read_blocks((driver), (out), 1)
-int read_blocks(const struct blk_device_drivers *blk_driver,  block_data_t *out, int count);
+#define read_one_sector(driver, out, sector_num) blk_read_sector((driver), (out), (sector_num), 1)
+int blk_read_sector(const struct blk_device_drivers *blk_driver,  block_data_t *out, unsigned long sector_num, int count);
 
 #endif // __MIKOOS_BLOCK_DRIVER_H

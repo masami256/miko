@@ -60,3 +60,16 @@ int strncmp(const char *s1, const char *s2, size_t n)
         return 0;
 }
 
+/**
+ * It words as strlen(3).
+ */
+size_t strlen(const char *s)
+{
+	const char *p = s;
+
+	while (*s++) 
+		;
+
+	return s - p;
+}
+

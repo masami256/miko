@@ -79,25 +79,30 @@ static bool initialize_ata(void);
 static bool sector_rw_common(u_int8_t cmd, int device, u_int32_t sector);
 static inline void finish_sector_rw(void);
 
+#define USE_SECTOR_RW_TEST 1
 #ifdef USE_SECTOR_RW_TEST
 static void sector_rw_test(void)
 {
-	sector_t buf[256];
+	block_data_t block;
 	bool ret;
+	int i;
+	ret = read_sector(0, 0x1b8, block.sector, SECTOR_SIZE);
+	if (ret)
+		printk("read error\n");
 
-	memset(buf, 0x0, sizeof(buf));
+	printk("Data at 0x1b8 is %s", block.data);
 
-	ret = read_sector(0, 222, buf, sizeof(buf) / sizeof(buf[0]));
-
-	buf[0] = 0x6261;
-	buf[1] = 0x6463;
-	buf[2] = 0xa065;
+//	buf[0] = 0x6261;
+//	buf[1] = 0x6463;
+//	buf[2] = 0xa065;
 	
-	write_sector(0, 222, buf, sizeof(buf) / sizeof(buf[0]));
+//	write_sector(0, 222, buf, sizeof(buf) / sizeof(buf[0]));
 
-	memset(buf, 0x0, sizeof(buf));
+	memset(block.sector, 0x0, sizeof(block.sector));
 
-	read_sector(0, 222, buf, sizeof(buf) / sizeof(buf[0]));
+	read_sector(0, 0x1ba, block.sector, SECTOR_SIZE);
+	printk("Data at 0x1ba is %s", block.data);
+
 }
 #endif
 
@@ -112,6 +117,8 @@ static int open_ATA_disk(void)
 	ret = initialize_ata();
 	if (!ret)
 		return -1;
+
+	sector_rw_test();
 
 	return 0;
 }

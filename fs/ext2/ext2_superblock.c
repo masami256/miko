@@ -23,7 +23,7 @@ static int ext2_get_sb(struct vfs_mount *vmount)
 
 	printk("%s\n", __FUNCTION__);
 
-	ret = read_one_block(vmount->driver, &sblock);
+	ret = read_one_sector(vmount->driver, &sblock, 2);
 
 	{
 		int i;
