@@ -4,3 +4,8 @@ core
 *.log
 kernel.img
 test/img/hda.img
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+HTML/
