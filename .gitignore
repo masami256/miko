@@ -4,6 +4,7 @@ core
 *.log
 kernel.img
 test/img/hda.img
+test/test_program/hello
 GPATH
 GRTAGS
 GSYMS

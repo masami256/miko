@@ -83,6 +83,7 @@ create_test_data:
 	mkdir -p /media/test/dir_a/dir_b /media/test/dir_A/dir_B
 	echo "foobar" > /media/test/dir_a/dir_b/foobar.txt 
 	echo "ABCDE" > /media/test/test.txt
+	cd test/test_program/ && make && cp hello /media/test/.
 	sudo umount /media/test 
 
 clean:
@@ -96,6 +97,7 @@ clean:
 	cd $(ext2_fs_dir) && make clean
 	cd $(minix_fs_dir) && make
 	cd $(klib_dir) && make clean
+	cd test/test_program && make clean
 	-rm -f $(kernel) *.log
 	find . -name '*~' -exec rm {} \; 
 
