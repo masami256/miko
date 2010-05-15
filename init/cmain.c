@@ -14,6 +14,7 @@
 #include <mikoOS/process.h>
 #include <mikoOS/vfs.h>
 #include <mikoOS/fs/ext2.h>
+#include <mikoOS/elf.h>
 #include "mount_root.h"
 
 #define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))

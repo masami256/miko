@@ -30,8 +30,11 @@ int mount_root_fs(void)
 	printk("rootfs mount finished\n");
 
 	ret = vfs_read("/dir_a/dir_b/foobar.txt", buf, sizeof(buf) - 1);
-
 	printk("/dir_a/dir_b/foobar.txt's size is %d bytes and data is %s", ret, buf);
 
+	memset(buf, 0, sizeof(buf));
+	ret = vfs_read("/hello", buf, sizeof(buf) - 1);
+	printk("Read /hello: %x %x %x %x\n", buf[0], buf[1], buf[2], buf[3]);
+ 
 	return 0;
 }
