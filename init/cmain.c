@@ -35,7 +35,7 @@ static void show_startup_message(void)
 void cmain(unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi = (multiboot_info_t *) addr;
-	char buf[512] = { 0 };
+	char *buf;
 
 	// initialize console to display messages.
 	cls();
@@ -76,8 +76,6 @@ void cmain(unsigned long magic, unsigned long addr)
 	init_ata_disk_driver();
 	show_all_registered_driver();
 
-	// setup tss for processes.
-	setup_tss();
 
 	// initialize file system.
 	minix_fs_init();
@@ -85,7 +83,9 @@ void cmain(unsigned long magic, unsigned long addr)
 	// mount root file system.
 	mount_root_fs();
 
-	vfs_read("/hello", buf, sizeof(buf) - 1);
+	buf = kmalloc(512);
+
+	vfs_read("/hello", buf, 512);
 	execute_elf(buf);
 
 	sti();

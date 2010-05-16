@@ -46,6 +46,6 @@ struct tss_struct {
 } __attribute__((packed));
 
 void schedule(void);
-int setup_tss(void);
+int setup_tss(unsigned char *data);
 
 #endif // __MIKOOS_X86_PROCESS_H

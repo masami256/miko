@@ -301,13 +301,15 @@ static void print_text_section(const struct elf *data)
 
 	if (!data->section_data.text)
 		return ;
-	printk("[-------Text section size(0x%lx)-------]\n", data->section_data.text->size);
+	printk("[-------Text section size(0x%x)-------]\n", data->section_data.text->size);
 
 	for (i = 0; i < data->section_data.text->size; i++) {
 		printk("0x%x ", data->section_data.text->data[i]);
 		if (i != 0 && (i % 16) == 0)
 			printk("\n");
 	}
+	printk("\n");
+
 }
 static void print_bss_section(const struct elf *data)
 {
@@ -483,6 +485,7 @@ int execute_elf(const unsigned char *file)
 
 	print_text_section(data);
 
+	setup_tss(data->section_data.text);
 //	free_elf_data(data);
 	
 	return 0;

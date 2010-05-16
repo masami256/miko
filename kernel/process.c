@@ -32,7 +32,7 @@ static void test_task2(void)
 {
 	while (1) {
 		wait_loop_usec(500);
-		printk("B");
+//		printk("B");
 		switch_task(0x28);
 	}
 	return ;
@@ -100,7 +100,7 @@ static void switch_task(u_int16_t sel)
 // public functions
 /////////////////////////////////////////////////
 
-int setup_tss(void)
+int setup_tss(unsigned char *data)
 {
 	u_int16_t cs, ds, ss;
 	u_int32_t esp;
@@ -120,7 +120,7 @@ int setup_tss(void)
 		(u_int32_t) &process_stack[0], ss,
 		esp, ss);
 	
-	set_tss(cs, ds, (u_int32_t) &test_task2, 0x202,
+	set_tss(cs, ds, (u_int32_t) data, 0x202,
 		(u_int32_t) &process_stack[1], ss,
 		esp, ss);
  
@@ -135,7 +135,7 @@ int setup_tss(void)
 
 void schedule(void)
 {
-#if 0
+#if 1
 	test_task1();
 #endif
 	return ;
