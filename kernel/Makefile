@@ -10,7 +10,8 @@ objs = gdt.o \
 	mm/mm.o \
 	process.o \
 	syscall.o \
-	syscall_table.o
+	syscall_table.o \
+	elf.o
 
 all: $(objs)
 	cd mm && make

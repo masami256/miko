@@ -24,7 +24,7 @@ extern void cmain(unsigned long magic, unsigned long addr);
 
 static void show_startup_message(void)
 {
-	printk("Welcome to mikoOS!\n");
+	printk("\nWelcome to mikoOS!\n");
 }
 
 /**
@@ -35,7 +35,8 @@ static void show_startup_message(void)
 void cmain(unsigned long magic, unsigned long addr)
 {
 	multiboot_info_t *mbi = (multiboot_info_t *) addr;
-	
+	char buf[512] = { 0 };
+
 	// initialize console to display messages.
 	cls();
 
@@ -83,6 +84,9 @@ void cmain(unsigned long magic, unsigned long addr)
 
 	// mount root file system.
 	mount_root_fs();
+
+	vfs_read("/hello", buf, sizeof(buf) - 1);
+	execute_elf(buf);
 
 	sti();
 

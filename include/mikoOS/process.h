@@ -3,4 +3,6 @@
 
 #include <mikoOS/arch/x86/process.h>
 
+int execute_elf(const unsigned char *file);
+
 #endif // __MIKOOS_PROCESS_H
