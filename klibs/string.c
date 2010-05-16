@@ -73,3 +73,12 @@ size_t strlen(const char *s)
 	return s - p;
 }
 
+/**
+ * It words as strcpy(3).
+ */
+char *strcpy(char *dest, const char *src)
+{
+	while (*dest++ = *src++)
+		;
+	return dest;
+}
