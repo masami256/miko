@@ -3,8 +3,7 @@
 #include <mikoOS/elf.h>
 #include <mikoOS/string.h>
 #include <mikoOS/kmalloc.h>
-
-static const char test_file[] = "/home/masami/experiment/miko/test/test_program/hello";
+#include <mikoOS/process.h>
 
 struct string_tables {
 	unsigned char *string_tbl;
@@ -56,13 +55,6 @@ static void free_string_tables(struct string_tables *tables);
 static void free_section(struct section *section);
 static void free_sections(struct sections *sections);
 
-static void print_symbol_table(const struct elf *data, const unsigned char *file);
-static void print_section_header(const struct elf *data, const unsigned char *file);
-static void print_program_header(const struct elf *data);
-static void print_header(const struct elf *data);
-static void print_text_section(const struct elf *data);
-static void print_bss_section(const struct elf *data);
-
 static void free_string_tables(struct string_tables *tables)
 {
 	if (tables->string_tbl)
@@ -87,7 +79,7 @@ static void free_sections(struct sections *sections)
 	free_section(sections->bss);
 }
 
-static void free_elf_data(struct elf *data)
+UNUSED static void free_elf_data(struct elf *data)
 {
 	if (!data)
 		return ;
@@ -288,13 +280,21 @@ static void get_section_name(const Elf32_Shdr *data, const unsigned char *table,
 	strcpy(buf, (const char *) table + data->sh_name);
 }
 
-static void get_symbol_string_name(const Elf32_Sym *data, const unsigned char *table, char *buf)
+UNUSED static void get_symbol_string_name(const Elf32_Sym *data, const unsigned char *table, char *buf)
 {
 	strcpy(buf, (const char *) table + data->st_name);
 }
 
-#define MIKO_ELF_DEBUG 1
 #ifdef MIKO_ELF_DEBUG 
+
+static void print_symbol_table(const struct elf *data, const unsigned char *file);
+static void print_section_header(const struct elf *data, const unsigned char *file);
+static void print_program_header(const struct elf *data);
+static void print_header(const struct elf *data);
+static void print_text_section(const struct elf *data);
+static void print_bss_section(const struct elf *data);
+
+
 static void print_text_section(const struct elf *data)
 {
 	size_t i;
@@ -404,30 +404,6 @@ static void print_header(const struct elf *data)
 	printk("e_shnum: 0x%x\n", data->e_hdr.e_shnum);
 	printk("e_shstrndx: 0x%x\n", data->e_hdr.e_shstrndx);
 }
-#else
-static void print_symbol_table(UNUSED const struct elf *data, UNUSED const unsigned char *file)
-{
-}
-
-static void print_section_header(UNUSED const struct elf *data, UNUSED const unsigned char *file)
-{
-}
-
-static void print_program_header(UNUSED const struct elf *data)
-{
-}
-
-static void print_header(UNUSED const struct elf *data)
-{
-}
-
-static void print_text_section(UNUSED const struct elf *data)
-{
-}
-
-static void print_bss_section(UNUSED const struct elf *data)
-{
-}
 
 #endif // MIKO_ELF_DEBUG
 
@@ -483,9 +459,7 @@ int execute_elf(const unsigned char *file)
 	
 	read_bss_section(data, file);
 
-	print_text_section(data);
-
-	setup_tss(data->section_data.text);
+	setup_tss(data->section_data.text->data);
 //	free_elf_data(data);
 	
 	return 0;

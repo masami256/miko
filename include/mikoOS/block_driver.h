@@ -9,7 +9,8 @@ struct blk_dev_driver_operations {
 	int (*close)(void);
 	int (*read)(int device, u_int32_t sector, 
 		    sector_t *buf, size_t buf_size);
-	int (*write)(void); // temporary definition.
+	int (*write)(int device, u_int32_t sector,
+		     sector_t *buf, size_t buf_size);
 	int (*ioctl)(void); // temporary definition.
 	int (*scattered_io)(void); // temporary definition.
 };

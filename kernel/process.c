@@ -28,7 +28,7 @@ static void test_task1(void)
 	return ;
 }
 
-static void test_task2(void)
+UNUSED static void test_task2(void)
 {
 	while (1) {
 		wait_loop_usec(500);

@@ -13,7 +13,7 @@
 #include <mikoOS/gdt.h>
 #include <mikoOS/process.h>
 #include <mikoOS/vfs.h>
-#include <mikoOS/fs/ext2.h>
+#include <mikoOS/fs/minixfs.h>
 #include <mikoOS/elf.h>
 #include "mount_root.h"
 
@@ -86,7 +86,7 @@ void cmain(unsigned long magic, unsigned long addr)
 	buf = kmalloc(512);
 
 	vfs_read("/hello", buf, 512);
-	execute_elf(buf);
+	execute_elf((const unsigned char *) buf);
 
 	sti();
 
