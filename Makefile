@@ -74,10 +74,10 @@ loop_dev_install:
 	sudo /sbin/losetup -d /dev/loop1
 
 bochs_test:
-	cd test && bochs -f .bochsrc 2>&1 | tee test.log&
+	cd test && bochs -q -f .bochsrc 2>&1 | tee test.log&
 
 qemu_test:
-	kvm -boot a -fda test/img/floppy.img -hda test/img/hda.img&
+	qemu-kvm -boot a -fda test/img/floppy.img -hda test/img/hda.img&
 
 create_test_data:
 	sudo mount test/img/hda.img /media/test -o loop
